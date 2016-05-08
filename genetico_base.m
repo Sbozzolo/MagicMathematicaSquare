@@ -88,9 +88,10 @@ chooseParents[pop_List, criterion_] :=
 	       ];
 	]; (*Restituisce una lista di individui*)
 
+(*Produce figli scambiando bit tra i genitori dati*)
 crossoverOne[parents_List, pc_] :=
 	Module[{where, c11, c12, c21, c22},
-	       If[Random[] > pc,
+	       If[Random[] < pc,
 		  where = Random[Integer, {1,Length[parents[[1]]]}];
 		  c11 = Take[parents[[1]], {1, where}];
 		  c12 = Take[parents[[1]], {where + 1, Length[parents[[1]]]}];
@@ -100,12 +101,12 @@ crossoverOne[parents_List, pc_] :=
 	       ]
 	]; (*Restituisce una lista contenente due individui mescolati*)
 
-(*Produce figli scambiando bit tra i genitori dati*)
+(*Produce figli scambiando bit tra i genitori dati in tutta la popolazione*)
 crossoverAll[pop_List, pIndex_List, pc_Real] :=
 	Module[{N},
 	       N = Length[pop];
 	       Return[Flatten[Table[
-		       crossoverOne[{pop[[pIndex[[i]]]],pop[[pIndex[[N-i]]]]}, pc],
+		       crossoverOne[{pop[[pIndex[[i]]]], pop[[pIndex[[N-i]]]]}, pc],
 		       {i,1,N/2}
 			      ], 1	
 		      ]
@@ -113,31 +114,31 @@ crossoverAll[pop_List, pIndex_List, pc_Real] :=
 	]; (*Restituisce una lista contenente una popolazione di individui mescolati*)
 
 (*Produce figli mescolati a partire dalla popolazione*)
-crossoverParents[pop_List, pc_Real, criterion_] :=
+crossoverParents[pop_List, pc_, criterion_] :=
 	Module[{},
 	       Return[crossoverAll[pop, chooseParents[pop, criterion], pc]];
 	];
 
 (*Produce una mutazione su un individuo*)
-mutationOne[ind_List, pm_Real] :=
+mutationOne[ind_List, pm_] :=
 	Module[{r},
 	       Return[Map[ (r = Random[]; If[r < pm, 1 - #, #]) &, ind]];
 	];
 
 (*Produce mutazioni su una popolazione*)
-mutationAll[pop_, pm_Real] :=
+mutationAll[pop_, pm_] :=
 	Module[{},
 	       Return[mutationOne[#, pm] & /@ pop]
 	];
 
 (*Produce una nuova popolazione a partire da una esistente*)
-reproduce[pop_List, criterion_, pc_Real, pm_Real] :=
+reproduce[pop_List, criterion_, pc_, pm_] :=
 	Module[{},
 	       Return[mutationAll[crossoverParents[pop, pc, criterion], pm]];
 	]; (*Restituisce una popolazione di nuovi individui*)
 		       
 (*Produce popolazioni finche' non arriva un individuo perfetto*)
-run[nInd_Integer, nBit_Integer, criterion_, pc_Real, pm_Real] :=
+run[nInd_Integer, nBit_Integer, criterion_, pc_, pm_] :=
 	Module[{count, popin},
 	       
 	       count = 1;
