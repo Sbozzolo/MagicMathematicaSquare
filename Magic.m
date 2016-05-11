@@ -1,3 +1,5 @@
+(*#!/usr/local/bin/math*)
+
 (*Magic Mathematica Square*)
 
 (*Costruisce quadrati magici di qualsiasi dimensione*)
@@ -5,7 +7,12 @@
 (*Un quadrato magico è uno schieramento di numeri interi distinti in una tabella
 quadrata tale che la somma dei numeri presenti in ogni riga, in ogni colonna e in
 entrambe le diagonali dia sempre lo stesso numero, il numero magico*)
-
+		 
+(*Esempio di quadrato magico 3x3*)
+(* 6 1 8
+   7 5 3
+   2 9 4 *)
+		 
 (*Calcola il numero magico*)
 magicNumber[n_Integer] :=
 	Module[{},
@@ -13,6 +20,7 @@ magicNumber[n_Integer] :=
 	];
 
 (*Genera un numero che non e' nella lista data*)
+(*Extreme sono gli estremi da cui pescare il numero*)
 randomDiff[list_List, extreme_List] :=
 	Module[{r},
 	       r = Random[Integer, extreme];
@@ -21,11 +29,17 @@ randomDiff[list_List, extreme_List] :=
 	];
 
 (*Genera un individuo, cioe' un quadrato magico*)
+(*Il numero massimo che puo' apparire in un quadrato magico e' n^2,
+  infatti il numero piu' grande che appare deve dare in tre somme
+  diverse il numero magico, quindi signfica che la riga, la colonna e
+  la diagonale devono contenere i numeri piu' piccoli ammessi, che
+  in un quadrato NxN sono i numeri da 1 a 3(n-1)
+ *)
+  
 generateSquare[n_Integer] :=
-	Module[{mag, used, ret},
-	       mag = magicNumber[n];
+	Module[{used, ret},
 	       used = Table[-1,{i,1,n},{j,1,n}];
-	       ret = Table[r = randomDiff[Flatten[used], {1, mag - 1}];
+	       ret = Table[r = randomDiff[Flatten[used], {1, n^2}];
 			   used[[i,j]] = r;
 			   r,{i,1,n},{j,1,n}];
 	       Return[ret];
@@ -101,9 +115,7 @@ minFitnessPop[pop_List] :=
 whoIsTheBest[pop_List] :=
 	Module[{min, l, fp},
 	       fp = fitnessPop[pop];
-	       min = Min[fp];
-	       l = Length[Select[fp, (# >= Min[fp]) &]];
-	       Return[pop[[l]]];
+	       Return[pop[[Position[fp, Min[fp]][[1,1]]]]];
 	];
 
 (*Fitness medio di una popolazione*)
@@ -186,7 +198,7 @@ deleteDouble[square_List] :=
 	Module[{order, numbers, insq, accept, went, this, r},
 	       order = Length[square];
 	       insq = Flatten[square];
-	       numbers = Table[i, {i, 1, magicNumber[order] - 1}];
+	       numbers = Table[i, {i, 1, order^2}];
 	       accept = DeleteCases[numbers, x_ /; isThere[insq, x]];
 	       went = {};
 	       ret = Table[If[isThere[went, square[[i,j]]],
@@ -253,7 +265,7 @@ crossoverParents[pop_List, pc_, criterion_] :=
 (*Produce una mutazione su un individuo*)
 (*La mutazione non produce doppioni*)
 mutationOne[square_List, pm_] :=
-	Module[{r, rr, ret, order, insq, accept, numbers, this},
+(*	Module[{r, rr, ret, order, insq, accept, numbers, this},
 	       order = Length[square];
 	       insq = Flatten[square];
 	       numbers = Table[i, {i, 1, magicNumber[order] - 1}];
@@ -271,7 +283,20 @@ mutationOne[square_List, pm_] :=
 		     ];
 	       Return[ret];
 	];
-
+ *)
+	Module[{r, order, temp, list},
+	       order = Length[square];
+	       If[Random[] < pm,
+		  r = RandomInteger[{1, order^2}, 2];
+		  list = Flatten[square];
+		  temp = list[[r[[1]]]];
+		  list[[r[[1]]]] = list[[r[[2]]]];
+		  list[[r[[2]]]] = temp;
+		  Return[listToSquare[list]],
+		  Return[square]
+	       ]
+	];
+		  
 (*Produce mutazioni su una popolazione*)
 mutationAll[pop_, pm_] :=
 	Module[{},
@@ -301,17 +326,26 @@ runLimited[nInd_Integer, order_Integer, criterion_, pc_, pm_, limit_Integer] :=
 	       ];
 	       
 	       Print["Generazione finale: ", count];
+	       
+	       best = whoIsTheBest[popin];
+	       Print[MatrixForm[best]];
+	       Print["Somme delle righe ", rowTotal[best]];
+	       Print["Somme delle colonne ", columnTotal[best]];
+	       Print["Somme delle diagonali ", diagonalTotal[best]];
+	       	       
 	       Return[whoIsTheBest[popin]];
 	];
 
 (*Produce popolazioni finche' non arriva un quadrato magico con limite di gen*)
 runFitnessTrend[nInd_Integer, order_Integer, criterion_, pc_, pm_, limit_Integer] :=
-	Module[{count, popin, fitmin},
+	Module[{count, popin, fitmin, fitmax, fitmean},
 	       
 	       count = 1;
 	       popin = generatePop[nInd, order];
 	       statGen[popin, 1];
 	       fitmin = {minFitnessPop[popin]};
+	       fitmax = {maxFitnessPop[popin]};
+	       fitmean = {meanFitnessPop[popin]};
 	       
 	       If[inFitnessPop[popin] === 0, Return[count]];
 
@@ -319,9 +353,11 @@ runFitnessTrend[nInd_Integer, order_Integer, criterion_, pc_, pm_, limit_Integer
 		     count += 1;
 		     popin = reproduce[popin, criterion, pc, pm];
 		     fitmin = Append[fitmin, minFitnessPop[popin]];
+		     fitmax = Append[fitmax, maxFitnessPop[popin]];
+		     fitmean = Append[fitmean, meanFitnessPop[popin]];
 		     statGen[popin, count];
 	       ];
 	       
 	       Print["Generazione finale: ", count];
-	       Return[fitmin];
+	       Return[{fitmin, fitmax, fitmean}];
 	];
