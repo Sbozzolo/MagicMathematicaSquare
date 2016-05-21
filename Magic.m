@@ -172,6 +172,12 @@ totalFitnessPop[pop_List] :=
 	Module[{},
 	       Return[Apply[Plus,fitnessPop[pop]]];
 	];
+	
+(*Distanza media dal migliore*)
+meanDistPop[pop_List] :=
+	Module[{},
+		   Return[N[Mean[permDist[whoIsTheBest[pop], #] & /@ pop]]];
+	];
 
 (*Statistiche di fitness di una popolazione*)
 statPop[pop_List] :=
@@ -193,7 +199,7 @@ statGen[pop_List, gen_Integer] :=
 (*Ripartisci intervallo*)
 (*Siccome l'individuo migliore e' quello che fitness minima si usano i reciproci*)
 divideInterval[pop_List, criterion_] :=
-	Module[{len, inv, inf},
+	Module[{len, inv, inf, best, dists, fits, upfits, distmean},
 	       Switch[criterion,
 		   
 		      fitnessProportionate, (*If criterion === FitnessProportionate*)
@@ -201,6 +207,37 @@ divideInterval[pop_List, criterion_] :=
 		      inf = Plus @@ inv;
 		      len = inv/inf;
 		      Return[Table[Sum[len[[i]],{i,1,j}],{j,1,Length[pop]}]],
+			  
+			  similarSquare,
+			  best = whoIsTheBest[pop];
+			  dists = permDist[best, #] & /@ pop;
+			  distmean = Mean[dists];
+			  dists = dists / distmean;
+			  Print[dists];
+			  fits = fitnessPop[pop];
+			  upfits = Table[fits[[i]](1 + dists[[i]]), {i,1,Length[pop]}];
+		      inv = N[#^(-1) & /@ upfits, 9]; (*N[] per performance*)
+		      inf = Plus @@ inv;
+		      len = inv/inf;
+		      Return[Table[Sum[len[[i]],{i,1,j}],{j,1,Length[pop]}]],			  
+			 
+			  similarSquareFit,
+			  best = whoIsTheBest[pop];
+			  If[fitness[best] < 100,  
+				 dists = permDist[best, #] & /@ pop;
+				 distmean = Mean[dists];
+			     dists = dists / (distmean meanFitnessPop[pop]);
+				 fits = fitnessPop[pop];
+				 upfits = Table[fits[[i]](1 + dists[[i]]), {i,1,Length[pop]}];
+				 inv = N[#^(-1) & /@ upfits, 9]; (*N[] per performance*)
+				 inf = Plus @@ inv;
+				 len = inv/inf;
+				 Return[Table[Sum[len[[i]],{i,1,j}],{j,1,Length[pop]}]],
+				 inv = N[#^(-1) & /@ fitnessPop[pop], 9]; (*N[] per performance*)
+				 inf = Plus @@ inv;
+				 len = inv/inf;
+				 Return[Table[Sum[len[[i]],{i,1,j}],{j,1,Length[pop]}]]
+				],				 
 			  			  
 		      criterion, (*Evita che il criterio non sia definito*)
 		      Print["Il criterio ", criterion, " non e' implementato"];
@@ -298,24 +335,16 @@ crossoverAll[pop_List, pIndex_List, pc_Real] :=
 (*choosePrantes crea la lista dei genitori scelti*)
 crossoverParents[pop_List, pc_, criterion_, elitism_:0] :=
 	Module[{bests, pop2, ret},
-		   If[EvenQ[elitism],
-		      Print["L'elitismo puo' essere solo per un numero pari di individui"];
-			  Abort[]
-		     ];
-		   If[elitism >= Length[pop],
-		      Print["Non puoi selezionare un elitismo cosi' elevato"];
-			  Abort[];
-		     ];	     
            If[elitism === 0,
 		      Return[crossoverAll[pop, chooseParents[pop, criterion], pc]],
 			  bests = {};
 			  pop2 = pop;
 			  For[i = 1, i <= elitism, i++,
-				  bests = Append[bests, whoIsTheBest[pop]];		   
+				  bests = Append[bests, whoIsTheBest[pop2]];		  
 				  pop2 = Drop[pop2, Position[pop2, bests[[i]]][[1]]]; 
 				 ];
 			  ret = crossoverAll[pop2, chooseParents[pop2, criterion], pc];
-			  ret = Append[ret, bests];
+			  ret = Join[ret, bests];
 			  Return[ret];			  
 			 ];			 
 	];
@@ -356,15 +385,36 @@ mutationOne[square_List, pm_] :=
 	];
 		  
 (*Produce mutazioni su una popolazione*)
-mutationAll[pop_, pm_] :=
-	Module[{},
-	       Return[mutationOne[#, pm] & /@ pop]
+mutationAll[pop_, pm_, elitism_Integer:0] :=
+	Module[{pop2, ret},
+		   pop2 = Drop[pop, elitism];
+		   ret = mutationOne[#, pm] & /@ pop2;
+		   ret = Join[pop[[1;;elitism]], pop2];
+	       Return[ret]
 	];
+	
+(*Elimina dalla popolazione i doppioni*)
+purge[pop_List] :=
+	Module[{ret, len, order},
+		len = Length[pop];
+		order = Length[pop[[1]]];
+		(*RICHIEDE MATHEMATICA 8*)
+		ret = DeleteDuplicates[pop];
+		Return[Join[generatePop[len - Length[ret], order], ret]];
+	]
 
 (*Produce una nuova popolazione a partire da una esistente*)
 reproduce[pop_List, criterion_, pc_, pm_, elitism_Integer:0] :=
 	Module[{},
-	       Return[mutationAll[crossoverParents[pop, pc, criterion], pm]];
+		   If[OddQ[elitism],
+		      Print["L'elitismo puo' essere solo per un numero pari di individui!"];
+			  Abort[]
+		     ];
+		   If[elitism >= Length[pop],
+		      Print["Non puoi selezionare un elitismo cosi' elevato!"];
+			  Abort[];
+		     ];	     
+	       Return[purge[mutationAll[crossoverParents[pop, pc, criterion, elitism], pm, elitism]]];
 	]; (*Restituisce una popolazione di nuovi individui*)
 
 (*Produce popolazioni finche' non arriva un quadrato magico con limite di gen*)
@@ -401,6 +451,7 @@ runFitnessTrend[nInd_Integer, order_Integer, criterion_, pc_, pm_, limit_Integer
 	       count = 1;
 	       popin = generatePop[nInd, order];
 	       statGen[popin, 1];
+		   Print["Distanza media dal migliore: ", meanDistPop[popin]];
 	       fitmin = {minFitnessPop[popin]};
 	       fitmax = {maxFitnessPop[popin]};
 	       fitmean = {meanFitnessPop[popin]};
@@ -414,6 +465,7 @@ runFitnessTrend[nInd_Integer, order_Integer, criterion_, pc_, pm_, limit_Integer
 		     fitmax = Append[fitmax, maxFitnessPop[popin]];
 		     fitmean = Append[fitmean, meanFitnessPop[popin]];
 		     statGen[popin, count];
+			 Print["Distanza media dal migliore: ", meanDistPop[popin]];
 	       ];
 	       
 	       Print["Generazione finale: ", count];
