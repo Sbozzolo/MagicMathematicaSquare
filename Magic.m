@@ -12,6 +12,13 @@ entrambe le diagonali dia sempre lo stesso numero, il numero magico*)
 (* 6 1 8
    7 5 3
    2 9 4 *)
+   
+If[$VersionNumber < 8, Print["Questo programma richiede Mathematica 8"]]
+
+(*Messaggio di benvenuto*)
+Print["Benveuto in MagicMathematicaSquare"]
+Print["Ecco le funzioni che puoi utilizzare:"]
+Print["runFitnessTrend[nInd_Integer, order_Integer, criterion_, pc_, pm_, limit_Integer]"]
 		 
 (*Calcola il numero magico*)
 magicNumber[n_Integer] :=
@@ -55,6 +62,36 @@ generatePop[popnum_Integer, order_Integer] :=
 	       ];
 	];
 
+(*Scambia gli elementi i e j di una lista*)
+swap[list_List, i_Integer, j_Integer] :=
+	Module[{},
+		   Return[list /. {list[[i]] -> list[[j]], list[[j]] -> list[[i]]}];
+	];
+
+(*Introduce una nozione di distanza tra quadrati come il
+  numero di scambi che sono necessari per portare il secondo
+  nel primo*)
+permDist[square1_List, square2_List] :=
+	Module[{order1, order2, counter, pos},
+		   counter = 0;
+	       order1 = Length[square1];
+	       order2 = Length[square2];
+	       flat1 = Flatten[square1];
+	       flat2 = Flatten[square2];
+	       If[order1 =!= order2,
+		      Print["I quadrati devono essere dello stesso ordine!"];
+		      Abort[];
+	       ];
+		   (*Controlla ogni elemento, se non combacia li scambia*)
+	       For[i = 1, i < Length[flat1], i++, 
+			   If[flat1[[i]] =!= flat2[[i]],
+			      pos = Position[flat2, flat1[[i]]][[1,1]];
+				  flat2 = swap[flat2, i, pos];
+				  counter += 1;
+				  ]
+			];
+		   Return[counter];
+	];	       
 (*Calcola somme righe*)
 rowTotal[square_List] :=
 	Module[{},
@@ -174,7 +211,7 @@ chooseParents[pop_List, criterion_] :=
 	Module[{r},
 	       Return[Table[
 		       r = Random[];
-		       Length[Select[divideInterval[pop,criterion], (# < r) &]] + 1,
+		       Length[Select[divideInterval[pop, criterion], (# < r) &]] + 1,
 		       {Length[pop]}
 		      ]
 	       ];
