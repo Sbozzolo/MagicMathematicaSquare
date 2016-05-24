@@ -12,13 +12,17 @@ entrambe le diagonali dia sempre lo stesso numero, il numero magico*)
 (* 6 1 8
    7 5 3
    2 9 4 *)
+
+
+(*Per aggiungere una fitness modificare*)
+(*fitness, whoIsTheBest, divideInterval, targetFitnessPop*)
    
 If[$VersionNumber < 8, Print["Questo programma richiede Mathematica 8"]]
 
 (*Messaggio di benvenuto*)
 Print["Benveuto in MagicMathematicaSquare"]
 Print["Ecco le funzioni che puoi utilizzare:"]
-Print["runFitnessTrend[nInd_Integer, order_Integer, criterion_, pc_, pm_, limit_Integer, elitism->0, fitnessFunction -> totalSquared]"]
+Print["runFitnessTrend[nInd_Integer, order_Integer, pc_, pm_, criterion->fintessProportionate, limit->1000, elitism->0, fitnessFunction -> totalSquared]"]
 		 
 (*Calcola il numero magico*)
 magicNumber[n_Integer] :=
@@ -117,30 +121,42 @@ fitness[ind_List, type_:totalSquared] :=
 	       row = rowTotal[ind] - magicNumber[order];
 	       column = columnTotal[ind] - magicNumber[order];
 	       diagonal = diagonalTotal[ind] - magicNumber[order];
-		   Switch[type,
-				  (*Questa funzione di fitness e' la somma dei quadrati*)
-				  (*della differenza tra i valori delle linee e il numero magico,*)
-				  (*intendendo con linee le righe, le colonne e le diagionali*)	
+	       
+	       Switch[type,
+		 (*Questa funzione di fitness e' la somma dei quadrati*)
+		 (*della differenza tra i valori delle linee e il numero magico,*)
+		 (*intendendo con linee le righe, le colonne e le diagionali*)	
 				  
-				  totalSquared,
-				  row = (#)^2 & /@ row;
-			      column = (#)^2 & /@ column;
-			      diagonal = (#)^2 & /@ diagonal;
-			      row = Plus @@ row;
-			      column = Plus @@ column;
-			      diagonal = Plus @@ diagonal;
-			      Return[row + column + diagonal],
+		      totalSquared,
+		      row = (#)^2 & /@ row;
+		      column = (#)^2 & /@ column;
+		      diagonal = (#)^2 & /@ diagonal;
+		      row = Plus @@ row;
+		      column = Plus @@ column;
+		      diagonal = Plus @@ diagonal;
+		      Return[row + column + diagonal],
+
+		(*Questa funzione di fitness e' come totalSquared ma non usa
+                  il quadrato ma il valore assoluto*)
+		      totalAbs,
+		      row = Abs[(#)] & /@ row;
+		      column = Abs[(#)] & /@ column;
+		      diagonal = Abs[(#)] & /@ diagonal;
+		      row = Plus @@ row;
+		      column = Plus @@ column;
+		      diagonal = Plus @@ diagonal;
+		      Return[row + column + diagonal],		      
 				  
-				  (*Questa funzione di fitness conta il numero di linee perfette*)
-				  (*Fitness 2 n + 2 significa che il quadrato e' magico*)
-				  
-				  correctLines,
-				  Return[Count[{row, column, diagonal}, 0, Infinity]],			  
+		(*Questa funzione di fitness conta il numero di linee perfette*)
+	        (*Fitness 2 n + 2 significa che il quadrato e' magico*)
+			 
+		      correctLines,
+		      Return[Count[{row, column, diagonal}, 0, Infinity]],	  
 		   
-				  _, (*Evita che il criterio non sia definito*)
-				  Print["La funzone di fitness ", type, " non e' ancora stata implementata"];
-				  Abort[];	
-				];   
+		      _, (*Evita che il criterio non sia definito*)
+		      Print["La funzione di fitness ", type, " non e' ancora stata implementata"];
+		      Abort[];	
+		];   
 	];
 
 (*Lista di fitness*)
@@ -164,7 +180,14 @@ minFitnessPop[pop_List, type_:totalSquared] :=
 whoIsTheBest[pop_List, type_:totalSquared] :=
 	Module[{min, l, fp},
 	       fp = fitnessPop[pop, type];
-	       Return[pop[[Position[fp, Min[fp]][[1,1]]]]];
+	       Switch[type,
+		      totalSquared,
+		      Return[pop[[Position[fp, Min[fp]][[1,1]]]]],
+		      totalAbs,
+		      Return[pop[[Position[fp, Min[fp]][[1,1]]]]],
+		      correctLines,
+		      Return[pop[[Position[fp, Max[fp]][[1,1]]]]]
+	       ];
 	];
 
 (*Fitness medio di una popolazione*)
@@ -188,7 +211,13 @@ totalFitnessPop[pop_List, type_:totalSquared] :=
 (*Distanza media dal migliore*)
 meanDistPop[pop_List, type_:totalSquared] :=
 	Module[{},
-		   Return[N[Mean[permDist[whoIsTheBest[pop, type], #] & /@ pop]]];
+	   Return[N[Mean[permDist[whoIsTheBest[pop, type], #] & /@ pop]]];
+	];
+
+(*Ordina una popolazione in basa alla fitness*)
+sortPop[pop_List, type_:totalSquared] :=
+	Module[{},
+	       Return[SortBy[pop, fitness[#, type] &]];
 	];
 	
 (*Restituisce la funzione di fitness migliore a seconda dei casi*)
@@ -196,9 +225,11 @@ targetFitnessPop[pop_List, type_:totalSquared] :=
 	Module[{},
 		   Switch[type,
 		          totalSquared,
-				  Return[minFitnessPop[pop, type]],
-				  correctLines,
-				  Return[maxFitnessPop[pop, type]]		   
+			  Return[minFitnessPop[pop, type]],
+			  totalAbs,
+			  Return[minFitnessPop[pop, type]],
+			  correctLines,
+			  Return[maxFitnessPop[pop, type]]
 		   ];
 	];
 
@@ -210,7 +241,7 @@ statPop[pop_List, type_:totalSquared, distance_:False] :=
 	       Print["Fitness medio: ", meanFitnessPop[pop, type]];
 	       Print["Fitness totale: ", totalFitnessPop[pop, type]];
 	       Print["Deviazione: ", devstdFitnessPop[pop, type]];
-		   If[distance, Print["Distanza media: ", meanDistPop[pop, type]] ];
+	       If[distance, Print["Distanza media: ", meanDistPop[pop, type]] ];
 	];
 
 (*Statistiche di una popolazione con il numero della generazione*)
@@ -226,47 +257,46 @@ divideInterval[pop_List, criterion_, type_:totalSquared] :=
 	Module[{len, inv, inf, best, dists, fits, upfits, distmean},
 	       Switch[criterion,
 		   
-				  fitnessProportionate, (*If criterion === FitnessProportionate*)
-				  fits = fitnessPop[pop, type];
-				  inv = N[#^(-1) & /@ fits, 9]; (*N[] per performance*)
-				  inf = Plus @@ inv;
-				  len = inv/inf;
-				  Return[Table[Sum[len[[i]],{i,1,j}],{j,1,Length[pop]}]],
+		      fitnessProportionate, (*If criterion === FitnessProportionate*)
+		      fits = fitnessPop[pop, type];
+		      Switch[type,
+			     totalSquared,
+			     inv = N[#^(-1) & /@ fits, 9],
+		             totalAbs,
+		             inv = N[#^(-1) & /@ fits, 9],
+	                     correctLines,
+			     inv = upfits
+		      ];
+		      inf = Plus @@ inv;
+		      len = inv/inf;
+		      Return[Table[Sum[len[[i]],{i,1,j}],{j,1,Length[pop]}]],
 				  
-				  similarSquare,
-				  best = whoIsTheBest[pop, type];
-				  dists = permDist[best, #] & /@ pop;
-				  distmean = Mean[dists];
-				  dists = dists / distmean;
-				  fits = fitnessPop[pop, type];
-				  upfits = Table[fits[[i]](1 + dists[[i]]), {i,1,Length[pop]}];
-				  inv = N[#^(-1) & /@ upfits, 9]; (*N[] per performance*)
-				  inf = Plus @@ inv;
-				  len = inv/inf;
-				  Return[Table[Sum[len[[i]],{i,1,j}],{j,1,Length[pop]}]],			  
-				 
-				  similarSquareFit,
-				  best = whoIsTheBest[pop, type];
-				  If[fitness[best, type] < 100,  
-					 dists = permDist[best, #] & /@ pop;
-					 distmean = Mean[dists];
-					 dists = dists meanFitnessPop[pop, type] / distmean;
-					 fits = fitnessPop[pop, type];
-					 upfits = Table[fits[[i]](1 + dists[[i]]^2), {i,1,Length[pop]}];
-					 inv = N[#^(-1) & /@ upfits, 9]; (*N[] per performance*)
-					 inf = Plus @@ inv;
-					 len = inv/inf;
-					 Return[Table[Sum[len[[i]],{i,1,j}],{j,1,Length[pop]}]],
-					 
-					 inv = N[#^(-1) & /@ fitnessPop[pop], 9]; (*N[] per performance*)
-					 inf = Plus @@ inv;
-					 len = inv/inf;
-					 Return[Table[Sum[len[[i]],{i,1,j}],{j,1,Length[pop]}]]
-					],				 
+		      similarSquare,
+		      best = whoIsTheBest[pop, type];
+		      dists = permDist[best, #] & /@ pop;
+		      distmean = Mean[dists];
+		      dists = dists / distmean;
+		      fits = fitnessPop[pop, type];
+		      upfits = Table[fits[[i]](1 + dists[[i]]), {i,1,Length[pop]}];
+		      Switch[type,
+			     totalSquared,
+			     inv = N[#^(-1) & /@ upfits, 9],
+		             totalAbs,
+		             inv = N[#^(-1) & /@ upfits, 9],
+	                     correctLines,
+			     inv = upfits
+		      ];
+		      inf = Plus @@ inv;
+		      len = inv/inf;
+		      Return[Table[Sum[len[[i]],{i,1,j}],{j,1,Length[pop]}]],
+
+		      fittests, (*Gli individui scelti hanno tutti la stessa probabilita*)
+		      dists = N[1/Length[pop]];
+		      Return[Table[Sum[dists,{j}],{j,1,Length[pop]}]],
 							  
-				  _, (*Evita che il criterio non sia definito*)
-				  Print["Il criterio ", criterion, " non e' implementato"];
-				  Abort[];
+       		      _, (*Evita che il criterio non sia definito*)
+		      Print["Il criterio ", criterion, " non e' implementato"];
+		      Abort[];
 	       ];
 	]; (*Restituisce una lista di segnaposti nell'intervallo 0,1*)
 		      
@@ -320,13 +350,48 @@ deleteDouble[square_List] :=
 	       Return[ret];
 	];
 
+(*Restitisce una lista contenente le righe corrette del quadrato*)
+goodRows[square_List] :=
+	Module[{order, mv},
+	       order = Length[square];
+	       mv = magicNumber[order];
+	       Return[Table[If[(Plus @@ square[[i]]) === mv, 1, 0], {i,1,order}]];
+	];
+
+(*Restituisce una lista contente le colonne corrette del quadrato*)
+goodColumns[square_List] :=
+	Module[{},
+	       Return[goodRows[Transpose[square]]];
+	];
+
+(*Scambia due righe tra due quadrati*)
+swapRows[square1_List, square2_List, row1_Integer, row2_Integer] :=
+	Module[{re1, ret2},
+	       If[Length[square1] =!= Length[square2],
+		  Print["Non si puo' fare questa operazione con ordini diversi!"];
+		  Abort[];
+	       ];
+	       ret1 = square1;
+	       ret1[[row1]] = square2[[row2]];
+	       ret2 = square2;
+	       ret2[[row2]] = square1[[row1]];
+	       Return[{ret1, ret2}];
+	];
+
+(*Scambia due colonne tra due quadrati*)
+swapColumns[square1_List, square2_List, row1_Integer, row2_Integer] :=
+	Module[{re1, ret2},
+	       Return[swapRows[Transpose[square1], Transpose[square2], row1, row2]];
+	];
+
 (*Produce figli a partire da due genitori*)
 (*Il crossover presenta una criticita': quando ci si scambiano geni puo' accadere che
   un quadrato contenga due volte lo stesso numero, che non e' consentito dalle regole.
   Una possibile soluzione e' questa: una volta prodotti i figli si fanno passare alla
   funzione deleteDouble*)
-crossoverOne[parents_List, pc_] :=
-	Module[{where, c11, c12, c21, c22, p1, p2, order, j1, j2},
+crossoverOne[parents_List, pc_, type_:totalSquared] :=
+	Module[{where, c11, c12, c21, c22, p1, p2, order, j1, j2, goodrows1, goodrow2,
+	        goodcols1, goodcols2, ps1, ps2, where1, where2, ran},
 	       (*If[Random[] < pc,
 		  order = Length[parents[[1]]];
 		  p1 = Flatten[parents[[1]],1];
@@ -341,33 +406,128 @@ crossoverOne[parents_List, pc_] :=
   		  Return[{j1, j2}],
 		  Return[parents];
 	       ]*)
+
+	       Switch[type,
+		      totalSquared,
 		   
-		  If[Random[] < pc,
-			(*Srotolo la struttura a quadrato*)
-			order = Length[parents[[1]]];
-			p1 = Flatten[parents[[1]],1];
-			p2 = Flatten[parents[[2]],1];
-			where1 = Random[Integer, {2,Length[p1] - 2}];
-			where2 = Random[Integer, {where1,Length[p1] - 1}];
-			c11 = Take[p1, {1, where1}];
-			c12 = Take[p1, {where1 + 1, where2}];
-			c13 = Take[p1, {where2 + 1, Length[p1]}];
-			c21 = Take[p2, {1, where1}];
-			c22 = Take[p2, {where1 + 1, where2}];
-			c23 = Take[p2, {where2 + 1, Length[p2]}];
-			j1 = deleteDouble[listToSquare[Join[c11,c22, c13]]];
-			j2 = deleteDouble[listToSquare[Join[c21,c12, c23]]];
-			Return[{j1, j2}],
-			Return[parents];
-		  ]		      
+		      If[Random[] <= pc,
+			 (*Crossover a due punti*)
+			 (*Srotolo la struttura a quadrato*)
+			 order = Length[parents[[1]]];
+			 p1 = Flatten[parents[[1]],1];
+			 p2 = Flatten[parents[[2]],1];
+			 where1 = Random[Integer, {2,Length[p1] - 2}];
+			 where2 = Random[Integer, {where1,Length[p1] - 1}];
+			 c11 = Take[p1, {1, where1}];
+			 c12 = Take[p1, {where1 + 1, where2}];
+			 c13 = Take[p1, {where2 + 1, Length[p1]}];
+			 c21 = Take[p2, {1, where1}];
+			 c22 = Take[p2, {where1 + 1, where2}];
+			 c23 = Take[p2, {where2 + 1, Length[p2]}];
+			 j1 = deleteDouble[listToSquare[Join[c11, c22, c13]]];
+			 j2 = deleteDouble[listToSquare[Join[c21, c12, c23]]];
+			 Return[{j1, j2}],
+			 Return[parents];
+		      ],
+
+		      correctLines,
+		      
+		      (*Questo crossover scambia due linee buone tra gli individui*)
+		      If[Random[] <= pc,
+			 goodrows1 = goodRows[parents[[1]]];
+			 goodrows2 = goodRows[parents[[2]]];
+			 goodcols1 = goodColumns[parents[[1]]];
+			 goodcols2 = goodColumns[parents[[2]]];		     
+			 c11 = Plus @@ goodrows1;
+			 c12 = Plus @@ goodrows2;
+			 c21 = Plus @@ goodcols1;
+			 c22 = Plus @@ goodcols2;
+			 (*Per avere un trattamento simmetrico tra righe e colonne*)
+			 ran = Random[Integer];
+			 Switch[ran,
+				0,
+				If[c11 c12 > 0,
+				   where1 = Random[Integer, {1, c11}];
+				   where2 = Random[Integer, {1, c12}];
+				   ps1 = Position[goodrows1, 1][[where1, 1]];
+				   ps2 = Position[goodrows2, 1][[where2, 1]];
+				   j1 = swapRows[parents[[1]], parents[[2]], ps1, ps2][[1]];
+				   j2 = swapRows[parents[[1]], parents[[2]], ps1, ps2][[2]];
+				   j1 = deleteDouble[j1];
+				   j2 = deleteDouble[j2];
+				   Return[{j1, j2}];
+				];
+				If[c21 c22 > 0,
+				   where1 = Random[Integer, {1, c21}];
+				   where2 = Random[Integer, {1, c22}];
+				   ps1 = Position[goodcols1, 1][[where1, 1]];
+				   ps2 = Position[goodcols2, 1][[where2, 1]];
+				   j1 = swapColumns[parents[[1]], parents[[2]], ps1, ps2][[1]];
+				   j2 = swapColumns[parents[[1]], parents[[2]], ps1, ps2][[2]];
+				   j1 = deleteDouble[j1];
+				   j2 = deleteDouble[j2];
+ 				   Return[{j1, j2}];
+				],
+				1,
+				If[c21 c22 > 0,
+				   where1 = Random[Integer, {1, c21}];
+				   where2 = Random[Integer, {1, c22}];
+				   ps1 = Position[goodcols1, 1][[where1, 1]];
+				   ps2 = Position[goodcols2, 1][[where2, 1]];
+				   j1 = swapColumns[parents[[1]], parents[[2]], ps1, ps2][[1]];
+				   j2 = swapColumns[parents[[1]], parents[[2]], ps1, ps2][[2]];
+				   j1 = deleteDouble[j1];
+				   j2 = deleteDouble[j2];
+				   Return[{j1, j2}];
+				];
+				If[c11 c12 > 0,
+				   where1 = Random[Integer, {1, c11}];
+				   where2 = Random[Integer, {1, c12}];
+				   ps1 = Position[goodrows1, 1][[where1, 1]];
+				   ps2 = Position[goodrows2, 1][[where2, 1]];
+				   j1 = swapRows[parents[[1]], parents[[2]], ps1, ps2][[1]];
+				   j2 = swapRows[parents[[1]], parents[[2]], ps1, ps2][[2]];
+				   j1 = deleteDouble[j1];
+				   j2 = deleteDouble[j2];
+				   Return[{j1, j2}];
+				]
+			 ];
+			 Return[parents],
+			 Return[parents];
+		      ],
+
+		      totalAbs,
+		      
+		      If[Random[] <= pc,
+			 (*Crossover ad un punto*)
+			 (*Srotolo la struttura a quadrato*)
+			 order = Length[parents[[1]]];
+			 p1 = Flatten[parents[[1]],1];
+			 p2 = Flatten[parents[[2]],1];
+			 where1 = Random[Integer, {1,Length[p1] - 1}];
+			 c11 = Take[p1, {1, where1}];
+			 c12 = Take[p1, {where1 + 1, Length[p1]}];
+			 c21 = Take[p2, {1, where1}];
+			 c22 = Take[p2, {where1 + 1, Length[p2]}];
+			 j1 = deleteDouble[listToSquare[Join[c11,c22]]];
+			 j2 = deleteDouble[listToSquare[Join[c21,c12]]];
+			 Return[{j1, j2}],
+			 Return[parents];
+		      ],
+
+		      _, (*Evita che il criterio non sia definito*)
+		      Print["La funzione di fitness ", type, " non e' ancora stata implementata"];
+		      Abort[];
+	       ];
+
 	]; (*Restituisce una lista contenente due individui mescolati*)
 
 (*Produce figli scambiando bit tra i genitori dati in tutta la popolazione*)
-crossoverAll[pop_List, pIndex_List, pc_Real] :=
+crossoverAll[pop_List, pIndex_List, pc_Real, type_:totalSquared] :=
 	Module[{N},
 	       N = Length[pop];
 	       Return[Flatten[Table[
-		       crossoverOne[{pop[[pIndex[[i]]]], pop[[pIndex[[N-i]]]]}, pc],
+		       crossoverOne[{pop[[pIndex[[i]]]], pop[[pIndex[[N-i]]]]}, pc, type],
 		       {i,1,N/2}
 			      ], 1	
 		      ]
@@ -378,15 +538,15 @@ crossoverAll[pop_List, pIndex_List, pc_Real] :=
 (*choosePrantes crea la lista dei genitori scelti*)
 crossoverParents[pop_List, pc_, criterion_, type_:totalSquared, elitism_:0] :=
 	Module[{bests, pop2, ret},
-           If[elitism === 0,
-		      Return[crossoverAll[pop, chooseParents[pop, criterion, type], pc]],
+               If[elitism === 0,
+		     Return[crossoverAll[pop, chooseParents[pop, criterion, type], pc, type]],
 			  bests = {};
 			  pop2 = pop;
 			  For[i = 1, i <= elitism, i++,
-				  bests = Append[bests, whoIsTheBest[pop2, type]];		  
-				  pop2 = Drop[pop2, Position[pop2, bests[[i]]][[1]]]; 
-				 ];
-			  ret = crossoverAll[pop2, chooseParents[pop2, criterion, type], pc];
+			      bests = Append[bests, whoIsTheBest[pop2, type]]; 
+			      pop2 = Drop[pop2, Position[pop2, bests[[i]]][[1]]]; 
+			      ];
+			  ret = crossoverAll[pop2, chooseParents[pop2, criterion, type], pc, type];
 			  ret = Join[ret, bests];
 			  Return[ret];			  
 			 ];			 
@@ -414,18 +574,44 @@ mutationOne[square_List, pm_] :=
 	       Return[ret];
 	];
  *)
-	Module[{r, order, temp, list},
+	Module[{n, r, order, temp, list},
 	       order = Length[square];
-	       If[Random[] < pm,
-			  r = RandomInteger[{1, order^2}, 2];
-			  list = Flatten[square];
-			  temp = list[[r[[1]]]];
-			  list[[r[[1]]]] = list[[r[[2]]]];
-			  list[[r[[2]]]] = temp;
-			  Return[listToSquare[list]],
-			  Return[square]
+	       n = Random[Integer, {1,3}];
+	       Switch[n,
+		      1, (*Scambio di una coppia*)
+		      If[Random[] <= pm,
+			 r = RandomInteger[{1, order^2}, 2];
+			 list = Flatten[square];
+			 temp = list[[r[[1]]]];
+			 list[[r[[1]]]] = list[[r[[2]]]];
+			 list[[r[[2]]]] = temp;
+			 Return[listToSquare[list]],
+			 Return[square]
+		      ],
+		      2, (*Scambia due colonne*)
+		      If[Random[] <= pm,
+			 r = RandomInteger[{1, order}, 2];
+			 list = Transpose[square];
+			 temp = list[[r[[1]]]];
+			 list[[r[[1]]]] = list[[r[[2]]]];
+			 list[[r[[2]]]] = temp;
+			 Return[Transpose[list]],
+			 Return[square]
+		      ],
+		      3, (*Scambia due righe*)
+		      If[Random[] <= pm,
+			 r = RandomInteger[{1, order}, 2];
+			 list = square;
+			 temp = list[[r[[1]]]];
+			 temp = list[[r[[1]]]];
+			 list[[r[[1]]]] = list[[r[[2]]]];
+			 list[[r[[2]]]] = temp;
+			 Return[list],
+			 Return[square]
+		      ]		      
 	       ];
 	];
+	
 		  
 (*Produce mutazioni su una popolazione*)
 mutationAll[pop_, pm_, elitism_Integer:0] :=
@@ -447,87 +633,92 @@ purge[pop_List] :=
 	]
 
 (*Produce una nuova popolazione a partire da una esistente*)
-reproduce[pop_List, criterion_, pc_, pm_, type_:totalSquared, elitism_Integer:0] :=
-	Module[{},
-		   If[OddQ[elitism],
-		      Print["L'elitismo puo' essere solo per un numero pari di individui!"];
-			  Abort[]
-		     ];
-		   If[elitism >= Length[pop],
-		      Print["Non puoi selezionare un elitismo cosi' elevato!"];
-			  Abort[];
-		     ];	     
+reproduce[pop_List, criterion_, pc_, pm_, type_:totalSquared, elitism_Integer:0, nfittests_Integer:0] :=
+	Module[{popsorted, mating, mated, new},
+	       If[OddQ[elitism],
+		  Print["L'elitismo puo' essere solo per un numero pari di individui!"];
+		  Abort[];
+	       ];	       
+	       If[elitism >= Length[pop],
+		  Print["Non puoi selezionare un elitismo cosi' elevato!"];
+		  Abort[];
+	       ];
+	       If[OddQ[nfittests],
+		  Print["Il numero di riproduzione puo' essere solo per un numero pari di individui!"];
+		  Abort[];
+	       ];
+	       If[nfittests >= Length[pop],
+		  Print["Non puoi selezionare un numero di individui cosi' elevato da far riprodurre!"];
+		  Abort[];
+	       ];
+	       If[criterion === fittests,
+		  popsorted = sortPop[pop, type];
+		  mating = popsorted[[1;;nfittests]];
+		  mated = mutationAll[crossoverParents[mating, pc, criterion, type, elitism], pm, elitism];
+		  new = generatePop[Length[pop] - nfittests, Length[pop[[1]]]];
+		  Return[purge[Join[new, mated]]];
+	       ];
+
 	       Return[purge[mutationAll[crossoverParents[pop, pc, criterion, type, elitism], pm, elitism]]];
 	]; (*Restituisce una popolazione di nuovi individui*)
-
-(*Produce popolazioni finche' non arriva un quadrato magico con limite di gen*)
-runLimited[nInd_Integer, order_Integer, criterion_, pc_, pm_, limit_Integer, elitism_Integer:0] :=
-	Module[{count, popin},
-	       
-	       count = 1;
-	       popin = generatePop[nInd, order];
-	       statGen[popin, 1];
-	       
-	       If[MinFitnessPop[popin] === 0, Return[count]];
-
-	       While[minFitnessPop[popin] > 0 && count < limit,
-		     count += 1;
-		     popin = reproduce[popin, criterion, pc, pm, elitism];
-		     statGen[popin, count];
-	       ];
-	       
-	       Print["Generazione finale: ", count];
-	       
-	       best = whoIsTheBest[popin];
-	       Print[MatrixForm[best]];
-	       Print["Somme delle righe ", rowTotal[best]];
-	       Print["Somme delle colonne ", columnTotal[best]];
-	       Print["Somme delle diagonali ", diagonalTotal[best]];
-	       	       
-	       Return[whoIsTheBest[popin]];
-	];
 	
 (*RICHIEDE MATHEMATICA 8*)	
-Options[runFitnessTrend] = {elitism -> 0, fitnessFunction -> totalSquared}
+Options[runFitnessTrend] = {elitism -> 0, fitnessFunction -> totalSquared, limit->1000,
+			    nfittests -> 0, criterion -> fitnessProportionate}
 
 (*Produce popolazioni finche' non arriva un quadrato magico con limite di gen*)
-runFitnessTrend[nInd_Integer, order_Integer, criterion_, pc_, pm_, limit_Integer, OptionsPattern[]] :=
-	Module[{count, popin, fitmin, fitmax, fitmean, distance, dists, target},
-	
-		   If[criterion === similarSquare || criterion === similarSquareFit,
-			  distance = True, 
-			  distance = False
-		     ];
-       
+runFitnessTrend[nInd_Integer, order_Integer, pc_, pm_, OptionsPattern[]] :=
+	Module[{count, popin, fitmin, fitmax, fitmean, distance, dists, target, t0},
+
+	       t0 = TimeUsed[];
 	       count = 1;
 	       popin = generatePop[nInd, order];
+	       
+	       If[Optionvalue[criterion] === similarSquare,
+		 distance = True;
+		 dists = {meanDistPop[popin, OptionValue[fitnessFunction]]},
+		 distance = False
+	       ];
+
+	       If[OptionValue[criterion] === fittests && OptionValue[nfittests] === 0,
+		 Print["Devi impostare un numero di individui da far riprodurre"];
+		 Print["Per farlo aggiungi la flag nfittests -> numero"];
+		 Abort[];
+	      ];       
 		   
 	       statGen[popin, 1, OptionValue[fitnessFunction], distance];
 		   
 	       fitmin = {minFitnessPop[popin, OptionValue[fitnessFunction]]};
 	       fitmax = {maxFitnessPop[popin, OptionValue[fitnessFunction]]};
 	       fitmean = {meanFitnessPop[popin, OptionValue[fitnessFunction]]};
-		   dists = {meanDistPop[popin, OptionValue[fitnessFunction]]};
-		   
-		   Switch[OptionValue[fitnessFunction],
-				  totalSquared,
-				  target = 0,
-				  correctLines,
-				  target = 2 order + 2		   
-				 ];
+
+	       Switch[OptionValue[fitnessFunction],
+		      totalSquared,
+		      target = 0,
+		      correctLines,
+		      target = 2 order + 2		   
+		     ];
 				 		   	       
 	       If[targetFitnessPop[popin, OptionValue[fitnessFunction]] === target, Return[count]];
 
-	       While[targetFitnessPop[popin, OptionValue[fitnessFunction]] =!= target && count < limit,
+	       While[targetFitnessPop[popin, OptionValue[fitnessFunction]] =!= target && count < OptionValue[limit],
 		     count += 1;
-		     popin = reproduce[popin, criterion, pc, pm, OptionValue[elitism]];
+		     popin = reproduce[popin, OptionValue[criterion], pc, pm,
+				       OptionValue[fitnessFunction], OptionValue[elitism],
+				       OptionValue[nfittests]];
 		     fitmin = Append[fitmin, minFitnessPop[popin, OptionValue[fitnessFunction]]];
 		     fitmax = Append[fitmax, maxFitnessPop[popin, OptionValue[fitnessFunction]]];
 		     fitmean = Append[fitmean, meanFitnessPop[popin, OptionValue[fitnessFunction]]];
-			 dists = Append[dists, meanDistPop[popin, OptionValue[fitnessFunction]]];
+		     If[distance,
+			dists = Append[dists, meanDistPop[popin, OptionValue[fitnessFunction]]];
+		     ];
 		     statGen[popin, count, OptionValue[fitnessFunction], distance];
 	       ];
 	       
 	       Print["Generazione finale: ", count];
-	       Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]],{fitmin, fitmax, fitmean, dists}}];
+	       Print["Tempo impiegato: ", TimeUsed[] - t0, " s"];
+	       If[distance,
+		  Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]],{fitmin, fitmax, fitmean, dists}}],
+		  Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]],{fitmin, fitmax, fitmean}}]
+	       ]
 	];
