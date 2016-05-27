@@ -14,15 +14,20 @@ entrambe le diagonali dia sempre lo stesso numero, il numero magico*)
    2 9 4 *)
 
 
+(*BUG NOTI:
+  L'elitismo potrebbe non funzionare perfettamente*)
+
+
 (*Per aggiungere una fitness modificare*)
-(*fitness, whoIsTheBest, divideInterval, targetFitnessPop*)
+(*fitness, whoIsTheBest, divideInterval, targetFitnessPop e nel run*)
    
 If[$VersionNumber < 8, Print["Questo programma richiede Mathematica 8"]]
 
 (*Messaggio di benvenuto*)
 Print["Benveuto in MagicMathematicaSquare"]
 Print["Ecco le funzioni che puoi utilizzare:"]
-Print["runFitnessTrend[nInd_Integer, order_Integer, pc_, pm_, criterion->fintessProportionate, limit->1000, elitism->0, fitnessFunction -> totalSquared]"]
+Print["run[nInd_Integer, order_Integer, pc_, pm_, criterion->fintessProportionate, limit->1000, elitism->0, fitnessFunction -> totalSquared]"]
+Print["L'output prodotto e': {whoIsTheBest}, timeused, {fitmin, fitmax, fitmean}"];
 		 
 (*Calcola il numero magico*)
 magicNumber[n_Integer] :=
@@ -151,7 +156,12 @@ fitness[ind_List, type_:totalSquared] :=
 	        (*Fitness 2 n + 2 significa che il quadrato e' magico*)
 			 
 		      correctLines,
-		      Return[Count[{row, column, diagonal}, 0, Infinity]],	  
+		      Return[Count[{row, column, diagonal}, 0, Infinity]],
+
+		(*Questa funzione di fintess conta il numero di righe perfette*)
+	        (*Un individuo perfetto e' quello che ha tutte le righe perfette*)
+		      correctRows,
+		      Return[Count[{row}, 0, Infinity]],
 		   
 		      _, (*Evita che il criterio non sia definito*)
 		      Print["La funzione di fitness ", type, " non e' ancora stata implementata"];
@@ -186,6 +196,8 @@ whoIsTheBest[pop_List, type_:totalSquared] :=
 		      totalAbs,
 		      Return[pop[[Position[fp, Min[fp]][[1,1]]]]],
 		      correctLines,
+		      Return[pop[[Position[fp, Max[fp]][[1,1]]]]],
+		      correctRows,
 		      Return[pop[[Position[fp, Max[fp]][[1,1]]]]]
 	       ];
 	];
@@ -229,6 +241,8 @@ targetFitnessPop[pop_List, type_:totalSquared] :=
 			  totalAbs,
 			  Return[minFitnessPop[pop, type]],
 			  correctLines,
+			  Return[maxFitnessPop[pop, type]],
+			  correctRows,
 			  Return[maxFitnessPop[pop, type]]
 		   ];
 	];
@@ -259,13 +273,16 @@ divideInterval[pop_List, criterion_, type_:totalSquared] :=
 		   
 		      fitnessProportionate, (*If criterion === FitnessProportionate*)
 		      fits = fitnessPop[pop, type];
+		      (*Aggiugnere qui le nuove fitness*)
 		      Switch[type,
 			     totalSquared,
 			     inv = N[#^(-1) & /@ fits, 9],
 		             totalAbs,
 		             inv = N[#^(-1) & /@ fits, 9],
 	                     correctLines,
-			     inv = upfits
+			     inv = fits,
+			     correctRows,
+			     inv = fits
 		      ];
 		      inf = Plus @@ inv;
 		      len = inv/inf;
@@ -278,12 +295,15 @@ divideInterval[pop_List, criterion_, type_:totalSquared] :=
 		      dists = dists / distmean;
 		      fits = fitnessPop[pop, type];
 		      upfits = Table[fits[[i]](1 + dists[[i]]), {i,1,Length[pop]}];
+		      (*Aggiungere qui le nuove fintess*)
 		      Switch[type,
 			     totalSquared,
 			     inv = N[#^(-1) & /@ upfits, 9],
 		             totalAbs,
 		             inv = N[#^(-1) & /@ upfits, 9],
 	                     correctLines,
+			     inv = upfits,
+			     correctRow,
 			     inv = upfits
 		      ];
 		      inf = Plus @@ inv;
@@ -382,6 +402,18 @@ swapRows[square1_List, square2_List, row1_Integer, row2_Integer] :=
 swapColumns[square1_List, square2_List, row1_Integer, row2_Integer] :=
 	Module[{re1, ret2},
 	       Return[swapRows[Transpose[square1], Transpose[square2], row1, row2]];
+	];
+
+(*Restistuice una permutazione della riga*)
+permutateRow[square_List, n_Integer] :=
+	Module[{},
+	       Return[Part[Permutations[square[[n]]], Random[Integer, {1, Length[square]!}]]];
+	];
+
+(*Restituisce una permutazione della colonna*)
+permutateColumn[square_List, n_Integer] :=
+	Module[{},
+	       Return[permutateRow[Transpose[square]]];
 	];
 
 (*Produce figli a partire da due genitori*)
@@ -515,6 +547,24 @@ crossoverOne[parents_List, pc_, type_:totalSquared] :=
 			 Return[parents];
 		      ],
 
+		      correctRows,
+		      If[Random[] <= pc,
+			 (*Crossover ad un punto su righe*)
+			 (*Srotolo la struttura a quadrato*)
+			 order = Length[parents[[1]]];
+			 p1 = parents[[1]];
+			 p2 = parents[[2]];
+			 where1 = Random[Integer, {2, order}];
+			 c11 = Take[p1, {1, where1}];
+			 c12 = Take[p1, {where1 + 1, Length[p1]}];
+			 c21 = Take[p2, {1, where1}];
+			 c22 = Take[p2, {where1 + 1, Length[p2]}];
+			 j1 = deleteDouble[Join[c11,c22]];
+			 j2 = deleteDouble[Join[c21,c12]];
+			 Return[{j1, j2}],
+			 Return[parents];
+		      ],		      
+
 		      _, (*Evita che il criterio non sia definito*)
 		      Print["La funzione di fitness ", type, " non e' ancora stata implementata"];
 		      Abort[];
@@ -537,46 +587,25 @@ crossoverAll[pop_List, pIndex_List, pc_Real, type_:totalSquared] :=
 (*Produce figli mescolati a partire dalla popolazione*)
 (*choosePrantes crea la lista dei genitori scelti*)
 crossoverParents[pop_List, pc_, criterion_, type_:totalSquared, elitism_:0] :=
-	Module[{bests, pop2, ret},
+	Module[{bests, pop2, ret, popsorted},
                If[elitism === 0,
-		     Return[crossoverAll[pop, chooseParents[pop, criterion, type], pc, type]],
-			  bests = {};
-			  pop2 = pop;
-			  For[i = 1, i <= elitism, i++,
-			      bests = Append[bests, whoIsTheBest[pop2, type]]; 
-			      pop2 = Drop[pop2, Position[pop2, bests[[i]]][[1]]]; 
-			      ];
-			  ret = crossoverAll[pop2, chooseParents[pop2, criterion, type], pc, type];
-			  ret = Join[ret, bests];
-			  Return[ret];			  
-			 ];			 
+		  Return[crossoverAll[pop, chooseParents[pop, criterion, type], pc, type]],
+		  popsorted = sortPop[pop, type];
+		  bests = popsorted[[1;;elitism]];
+		  pop2 = Drop[pop, elitism];
+		  ret = crossoverAll[pop2, chooseParents[pop2, criterion, type], pc, type];
+		  ret = Join[ret, bests];
+		  Return[ret];			  
+		 ];			 
 	];
 
 (*Produce una mutazione su un individuo*)
 (*La mutazione non produce doppioni*)
 mutationOne[square_List, pm_] :=
-(*	Module[{r, rr, ret, order, insq, accept, numbers, this},
-	       order = Length[square];
-	       insq = Flatten[square];
-	       numbers = Table[i, {i, 1, magicNumber[order] - 1}];
-	       accept = DeleteCases[numbers, x_ /; isThere[insq, x]];
-	       ret = Table[r = Random[];
-			   If[r < pm,
-			      rr = Random[Integer, {1, Length[accept]}];
-			      this = accept[[rr]];
-			      accept = Drop[accept, {rr}];
-			      accept = Append[accept, square[[i,j]]];
-			      this,
-			      square[[i,j]]
-			   ],
-			   {i, 1, order}, {j, 1, order}
-		     ];
-	       Return[ret];
-	];
- *)
 	Module[{n, r, order, temp, list},
 	       order = Length[square];
-	       n = Random[Integer, {1,3}];
+	       n = Random[Integer, {1, 5}];
+	       n = 4;
 	       Switch[n,
 		      1, (*Scambio di una coppia*)
 		      If[Random[] <= pm,
@@ -608,18 +637,152 @@ mutationOne[square_List, pm_] :=
 			 list[[r[[2]]]] = temp;
 			 Return[list],
 			 Return[square]
+		      ],
+		      4, (*Permuta una riga*)
+		      If[Random[] <= pm,
+			 r = Random[Integer, {1, order}];
+			 list = square;
+			 list[[r]] = permutateRow[square, r];
+			 Return[list],
+			 Return[square]
+		      ],
+		      5, (*Permuta una colonna*)
+		      If[Random[] <= pm,
+			 r = Random[Integer, {1, order}];
+			 list = square;
+			 list[[r]] = permutateRow[square, r];
+			 Return[list],
+			 Return[square]
 		      ]		      
 	       ];
 	];
-	
+
+(*Data un numero cerca tutti gli elementi nelle righe che
+  hanno per somma questo valore*)
+findPairInRow[square_List, row_Integer, sum_Integer] :=
+	Module[{},
+	       Return[Cases[Subsets[square[[row]], {2}],
+				  x_ /; Total[x] === sum
+		      ]
+	       ];
+	];
+
+(*Prendi due elementi a caso da una riga,
+  prende una riga a caso e cerca le coppie che hanno la
+  stessa somma e fa uno scambiuo a caso, se nella riga
+  considerata non c'e' nessuna coppia ne cerca un'atra*)
+swapElementsFromCorrectRows[square_List] :=
+	Module[{order, row, pair, randrow, pairs, ret, selectpair, sub1, sub2, rows},
+	       order = Length[square];
+	       row = Random[Integer, {1, order}];
+	       (*Richiede Mathematica 8*)
+	       pair = RandomSample[square[[row]], 2];
+	       pairs = {};
+	       numbers = Table[i, {i,1,order}];
+	       numbers = DeleteCases[numbers, row];
+	       While[Length[pairs] === 0,
+		     If[Length[numbers] === 0,
+			Break[];
+			Break[];
+		     ];
+		     randrow = RandomChoice[numbers, 1];
+		     randrow = randrow[[1]];
+		     While[randrow === row,
+			   randrow = Random[Integer, {1, order}];
+		     ];
+		     pairs = findPairInRow[square, randrow, Total[pair]];
+		     numbers = DeleteCases[numbers, randrow];
+	       ];
+	       ret = square;
+	       If[Length[numbers] =!= 0,
+		  selectpair = RandomSample[pairs, 1];
+		  selectpair = Flatten[selectpair, 1];		  
+		  sub1 = {pair[[1]] -> selectpair[[2]], pair[[2]] -> selectpair[[1]]};
+		  sub2 = {selectpair[[1]] -> pair[[2]], selectpair[[2]] -> pair[[1]]};
+		  ret[[row]] = ret[[row]] /. sub1;
+		  ret[[randrow]] = ret[[randrow]] /. sub2
+	       ];
+	       Return[ret];
+	];
+
+(*Applica piu' volte swapElementsFromCorrectRows*)
+swapElementsFromCorrectRowsMulti[square_List, multi_Integer:1] :=
+	Module[{},
+	       Return[Nest[swapElementsFromCorrectRows[#] &, square, multi]];
+	];
+
+(*Applica swapElementsFromCorrectRows ad una popolazione*)
+swapElementsFromCorrectRowsAll[pop_List, elitism_Integer:0, multi_Integer:1] :=
+	Module[{pop2, ret},
+	       pop2 = Drop[pop, elitism];
+	       ret = swapElementsFromCorrectRowsMulti[#, multi] & /@ pop2;
+	       ret = Join[pop[[1;;elitism]], pop2];
+	       Return[ret];
+	];
+    
+
+(*RICHIEDE MATHEMATICA 8*)	
+Options[fromRowsToMagic] = {elitism -> 0, fitnessFunction -> correctLines, limit->1000,
+			    multi -> 10}
+
+(*Prende una popolazione di individui con righe perfette e li mischia*)
+fromRowsToMagic[pop_List, pm_, OptionsPattern[]] :=
+	Module[{order, nind, count, t0, fintmin, fitmax, fitmean,
+	        deletat, popin},
+
+	       nind = Length[pop];
+	       order = Length[pop[[1]]];
+
+	       Print["-----Inizio a scambiare le righe-----"];
+	       t0 = TimeUsed[];
+	       count = 1;
+	       popin = pop;
+	       		   
+	       statGen[popin, 1, OptionValue[fitnessFunction]];
+		   
+	       fitmin = {minFitnessPop[popin, OptionValue[fitnessFunction]]};
+	       fitmax = {maxFitnessPop[popin, OptionValue[fitnessFunction]]};
+	       fitmean = {meanFitnessPop[popin, OptionValue[fitnessFunction]]};
+
+	       (*Aggiornare qui quando si aggiunge fitness*)
+	       Switch[OptionValue[fitnessFunction],
+		      totalSquared,
+		      target = 0,
+		      correctLines,
+		      target = 2 order + 2
+		     ];
+				 		   	       
+	       If[targetFitnessPop[popin, OptionValue[fitnessFunction]] === target, Return[count]];
+
+	       While[targetFitnessPop[popin, OptionValue[fitnessFunction]] =!= target && count < OptionValue[limit],
+		     count += 1;
+		     popin = swapElementsFromCorrectRowsAll[popin, OptionValue[elitism], OptionValue[multi]];
+		     fitmin = Append[fitmin, minFitnessPop[popin, OptionValue[fitnessFunction]]];
+		     fitmax = Append[fitmax, maxFitnessPop[popin, OptionValue[fitnessFunction]]];
+		     fitmean = Append[fitmean, meanFitnessPop[popin, OptionValue[fitnessFunction]]];
+		     statGen[popin, count, OptionValue[fitnessFunction]];
+	       ];
+
+	       deltat = TimeUsed[] - t0;
+	       
+	       Print["Generazione finale: ", count];
+	       Print["Tempo impiegato: ", deltat, " s"];
+	       Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]], deltat, {fitmin, fitmax, fitmean}}];
+	];
+
+(*Esegue piu' mutazioni*)
+mutationMulti[square_List, pm_, multi_Integer:1] :=
+	Module[{},
+	       Return[Nest[mutationOne[#, pm] &, square, multi]];
+	];
 		  
 (*Produce mutazioni su una popolazione*)
-mutationAll[pop_, pm_, elitism_Integer:0] :=
+mutationAll[pop_List, pm_, elitism_Integer:0, multi_Integer:1] :=
 	Module[{pop2, ret},
-		   pop2 = Drop[pop, elitism];
-		   ret = mutationOne[#, pm] & /@ pop2;
-		   ret = Join[pop[[1;;elitism]], pop2];
-	       Return[ret]
+	       pop2 = Drop[pop, elitism];
+	       ret = mutationMulti[#, pm, multi] & /@ pop2;
+	       ret = Join[pop[[1;;elitism]], pop2];
+	       Return[ret];
 	];
 	
 (*Elimina dalla popolazione i doppioni*)
@@ -630,11 +793,21 @@ purge[pop_List] :=
 		(*RICHIEDE MATHEMATICA 8*)
 		ret = DeleteDuplicates[pop];
 		Return[Join[generatePop[len - Length[ret], order], ret]];
-	]
+	];
+
+(*TODO INSERIRE LE OPZIONI PER REPRODUCE*)
+(*TODO INSERIRE LE OPZIONI PER REPRODUCE*)
+(*TODO INSERIRE LE OPZIONI PER REPRODUCE*)
+(*TODO INSERIRE LE OPZIONI PER REPRODUCE*)
+(*TODO INSERIRE LE OPZIONI PER REPRODUCE*)
+(*TODO INSERIRE LE OPZIONI PER REPRODUCE*)
+(*TODO INSERIRE LE OPZIONI PER REPRODUCE*)
+(*TODO INSERIRE LE OPZIONI PER REPRODUCE*)
 
 (*Produce una nuova popolazione a partire da una esistente*)
-reproduce[pop_List, criterion_, pc_, pm_, type_:totalSquared, elitism_Integer:0, nfittests_Integer:0] :=
-	Module[{popsorted, mating, mated, new},
+reproduce[pop_List, criterion_, pc_, pm_, type_:totalSquared, elitism_Integer:0,
+	  nfittests_Integer:0, crossover_Integer:1, multi_Integer:1] :=
+	Module[{popsorted, mating, mated, new, bests},
 	       If[OddQ[elitism],
 		  Print["L'elitismo puo' essere solo per un numero pari di individui!"];
 		  Abort[];
@@ -651,6 +824,10 @@ reproduce[pop_List, criterion_, pc_, pm_, type_:totalSquared, elitism_Integer:0,
 		  Print["Non puoi selezionare un numero di individui cosi' elevato da far riprodurre!"];
 		  Abort[];
 	       ];
+	       (*Se non c'e' crossover*)
+	       If[crossover === 0,	  
+		  Retrun[purge[mutationAll[pop, pm, elitism]]];
+	       ];
 	       If[criterion === fittests,
 		  popsorted = sortPop[pop, type];
 		  mating = popsorted[[1;;nfittests]];
@@ -658,17 +835,28 @@ reproduce[pop_List, criterion_, pc_, pm_, type_:totalSquared, elitism_Integer:0,
 		  new = generatePop[Length[pop] - nfittests, Length[pop[[1]]]];
 		  Return[purge[Join[new, mated]]];
 	       ];
-
-	       Return[purge[mutationAll[crossoverParents[pop, pc, criterion, type, elitism], pm, elitism]]];
+	       Return[purge[mutationAll[crossoverParents[pop, pc, criterion, type, elitism], pm, elitism, multi]]];
 	]; (*Restituisce una popolazione di nuovi individui*)
 	
 (*RICHIEDE MATHEMATICA 8*)	
-Options[runFitnessTrend] = {elitism -> 0, fitnessFunction -> totalSquared, limit->1000,
-			    nfittests -> 0, criterion -> fitnessProportionate}
+Options[run] = {elitism -> 0, fitnessFunction -> totalSquared, limit->1000,
+			    nfittests -> 0, criterion -> fitnessProportionate,
+			    crossover -> 1, method -> none}
+
+(*elitism e' il numero di individui conservati di generazione in generazione
+  fitnessFunction e' la funzione di fintess da usare
+  limit e' il numero massimo di genrazioni
+  nfittists (da settare se si usa fittests come criterion e' la dimensione della mating pool
+  criterion e' il criterio per definire i pesi di rirpoduzion
+  crossover 0 disabilita il crossover
+  method per utilizzare un metodo articolato*)
+
+(*Dei valori non male sono nInd = 50, pc = 0.25, pm = 0.75*)
 
 (*Produce popolazioni finche' non arriva un quadrato magico con limite di gen*)
-runFitnessTrend[nInd_Integer, order_Integer, pc_, pm_, OptionsPattern[]] :=
-	Module[{count, popin, fitmin, fitmax, fitmean, distance, dists, target, t0},
+run[nInd_Integer, order_Integer, pc_, pm_, OptionsPattern[]] :=
+	Module[{count, popin, fitmin, fitmax, fitmean,
+		distance, dists, target, t0, deltat},
 
 	       t0 = TimeUsed[];
 	       count = 1;
@@ -692,11 +880,14 @@ runFitnessTrend[nInd_Integer, order_Integer, pc_, pm_, OptionsPattern[]] :=
 	       fitmax = {maxFitnessPop[popin, OptionValue[fitnessFunction]]};
 	       fitmean = {meanFitnessPop[popin, OptionValue[fitnessFunction]]};
 
+	       (*Aggiornare qui quando si aggiunge fitness*)
 	       Switch[OptionValue[fitnessFunction],
 		      totalSquared,
 		      target = 0,
 		      correctLines,
-		      target = 2 order + 2		   
+		      target = 2 order + 2,
+		      correctRows,
+		      target = order
 		     ];
 				 		   	       
 	       If[targetFitnessPop[popin, OptionValue[fitnessFunction]] === target, Return[count]];
@@ -705,7 +896,7 @@ runFitnessTrend[nInd_Integer, order_Integer, pc_, pm_, OptionsPattern[]] :=
 		     count += 1;
 		     popin = reproduce[popin, OptionValue[criterion], pc, pm,
 				       OptionValue[fitnessFunction], OptionValue[elitism],
-				       OptionValue[nfittests]];
+				       OptionValue[nfittests], OptionValue[crossover]];
 		     fitmin = Append[fitmin, minFitnessPop[popin, OptionValue[fitnessFunction]]];
 		     fitmax = Append[fitmax, maxFitnessPop[popin, OptionValue[fitnessFunction]]];
 		     fitmean = Append[fitmean, meanFitnessPop[popin, OptionValue[fitnessFunction]]];
@@ -714,11 +905,58 @@ runFitnessTrend[nInd_Integer, order_Integer, pc_, pm_, OptionsPattern[]] :=
 		     ];
 		     statGen[popin, count, OptionValue[fitnessFunction], distance];
 	       ];
+
+	       deltat = TimeUsed[] - t0;
 	       
 	       Print["Generazione finale: ", count];
-	       Print["Tempo impiegato: ", TimeUsed[] - t0, " s"];
+	       Print["Tempo impiegato: ", deltat, " s"];
 	       If[distance,
-		  Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]],{fitmin, fitmax, fitmean, dists}}],
-		  Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]],{fitmin, fitmax, fitmean}}]
+		  Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]], deltat, {fitmin, fitmax, fitmean, dists}}],
+		  Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]], deltat, {fitmin, fitmax, fitmean}}]
 	       ]
+	];
+
+(*Controlla se una lista ha due volte uno stesso elemento*)
+checkIfValidLine[row_List] :=
+	Module[{order},
+	       order = Length[row];
+	       If[Length[row] === Length[Tally[row]],
+		  If[Length[DeleteCases[row, x_ /; x > order^2]] =!= Length[row],
+		     Return[False],
+		     Return[True] (*Valido*)
+		  ],
+		  Return[False] (*Invalido*)
+	       ];
+	];
+
+(*Applica una permutazione random ad una linea*)
+randomPermutation[row_List] :=
+	Module[{},
+	       Return[RandomChoice[Permutations[row]]];
+	];
+
+(*Costruisce tutti i possibili quadrati con righe perfette*)
+buildFromScratch[order_Integer] :=
+	Module[{parts, mn, goods, used, n, ret, i},
+	       If[order > 7,
+		  Print["Attualmente questa funzione gira con al massimo ordine 7"];
+		  Abort[];
+	       ];
+	       mn = magicNumber[order];
+	       parts = IntegerPartitions[mn, {order}];
+	       goods = DeleteCases[parts, x_ /; checkIfValidLine[x] === False];
+	       goods = randomPermutation /@ goods;
+	       n = Random[Integer, {1, Length[goods]}];
+	       ret = Table[1, {order}];
+	       used = {};
+	       i = 1;
+	       While[i <= order,
+		     While[Length[Intersection[goods[[n]], used]] =!= 0,
+			    n = Random[Integer, {1, Length[goods]}];
+		     ];
+		     ret[[i]] = goods[[n]];
+		     used = Flatten[Append[used, ret[[i]]]];
+		     i += 1;
+	       ];
+	       Return[ret];
 	];
