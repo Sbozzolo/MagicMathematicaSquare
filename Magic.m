@@ -13,13 +13,9 @@ entrambe le diagonali dia sempre lo stesso numero, il numero magico*)
    7 5 3
    2 9 4 *)
 
-
-(*BUG NOTI:
-  L'elitismo potrebbe non funzionare perfettamente*)
-
-
 (*Per aggiungere una fitness modificare*)
 (*fitness, whoIsTheBest, divideInterval, targetFitnessPop e nel run*)
+(*anche in sortpop*)
    
 If[$VersionNumber < 8, Print["Questo programma richiede Mathematica 8"]]
 
@@ -229,7 +225,10 @@ meanDistPop[pop_List, type_:totalSquared] :=
 (*Ordina una popolazione in basa alla fitness*)
 sortPop[pop_List, type_:totalSquared] :=
 	Module[{},
-	       Return[SortBy[pop, fitness[#, type] &]];
+	       If[type === totalSquared,
+		  Return[SortBy[pop, fitness[#, type] &]],
+		  Return[SortBy[pop, 1/fitness[#, type] &]];
+	       ];
 	];
 	
 (*Restituisce la funzione di fitness migliore a seconda dei casi*)
@@ -712,11 +711,12 @@ swapElementsFromCorrectRowsMulti[square_List, multi_Integer:1] :=
 	];
 
 (*Applica swapElementsFromCorrectRows ad una popolazione*)
-swapElementsFromCorrectRowsAll[pop_List, elitism_Integer:0, multi_Integer:1] :=
-	Module[{pop2, ret},
-	       pop2 = Drop[pop, elitism];
+swapElementsFromCorrectRowsAll[pop_List, elitism_Integer:0, type_:correctLines, multi_Integer:1] :=
+	Module[{popsorted, pop2, ret},
+	       popsorted = sortPop[pop, type];
+	       pop2 = Drop[popsorted, elitism];
 	       ret = swapElementsFromCorrectRowsMulti[#, multi] & /@ pop2;
-	       ret = Join[pop[[1;;elitism]], pop2];
+	       ret = Join[popsorted[[1;;elitism]], pop2];
 	       Return[ret];
 	];
     
@@ -726,17 +726,14 @@ Options[fromRowsToMagic] = {elitism -> 0, fitnessFunction -> correctLines, limit
 			    multi -> 10}
 
 (*Prende una popolazione di individui con righe perfette e li mischia*)
-fromRowsToMagic[pop_List, pm_, OptionsPattern[]] :=
-	Module[{order, nind, count, t0, fintmin, fitmax, fitmean,
-	        deletat, popin},
-
-	       nind = Length[pop];
-	       order = Length[pop[[1]]];
+fromRowsToMagic[nInd_Integer, order_Integer, OptionsPattern[]] :=
+	Module[{count, t0, fintmin, fitmax, fitmean,
+	        deletat, popin, popsorted, i, newpop},
 
 	       Print["-----Inizio a scambiare le righe-----"];
 	       t0 = TimeUsed[];
 	       count = 1;
-	       popin = pop;
+	       popin = ParallelTable[buildFromScratch[order], {nInd}];
 	       		   
 	       statGen[popin, 1, OptionValue[fitnessFunction]];
 		   
@@ -756,7 +753,11 @@ fromRowsToMagic[pop_List, pm_, OptionsPattern[]] :=
 
 	       While[targetFitnessPop[popin, OptionValue[fitnessFunction]] =!= target && count < OptionValue[limit],
 		     count += 1;
-		     popin = swapElementsFromCorrectRowsAll[popin, OptionValue[elitism], OptionValue[multi]];
+		     popin = swapElementsFromCorrectRowsAll[popin, OptionValue[elitism],
+							    OptionValue[fitnessFunction], OptionValue[multi]];
+		     popsorted = sortPop[popin, OptionValue[fitnessFunction]];
+		     newpop = ParallelTable[buildFromScratch[order], {nInd/2}];
+		     popin = Join[popsorted[[1;;nInd/2]], newpop];
 		     fitmin = Append[fitmin, minFitnessPop[popin, OptionValue[fitnessFunction]]];
 		     fitmax = Append[fitmax, maxFitnessPop[popin, OptionValue[fitnessFunction]]];
 		     fitmean = Append[fitmean, meanFitnessPop[popin, OptionValue[fitnessFunction]]];
@@ -777,11 +778,12 @@ mutationMulti[square_List, pm_, multi_Integer:1] :=
 	];
 		  
 (*Produce mutazioni su una popolazione*)
-mutationAll[pop_List, pm_, elitism_Integer:0, multi_Integer:1] :=
-	Module[{pop2, ret},
-	       pop2 = Drop[pop, elitism];
+mutationAll[pop_List, pm_, type_:totalSquared, elitism_Integer:0, multi_Integer:1] :=
+	Module[{pop2, popsorted, ret},
+	       popsorted = sortPop[pop, type];
+	       pop2 = Drop[popsorted, elitism];
 	       ret = mutationMulti[#, pm, multi] & /@ pop2;
-	       ret = Join[pop[[1;;elitism]], pop2];
+	       ret = Join[popsorted[[1;;elitism]], pop2];
 	       Return[ret];
 	];
 	
@@ -831,11 +833,11 @@ reproduce[pop_List, criterion_, pc_, pm_, type_:totalSquared, elitism_Integer:0,
 	       If[criterion === fittests,
 		  popsorted = sortPop[pop, type];
 		  mating = popsorted[[1;;nfittests]];
-		  mated = mutationAll[crossoverParents[mating, pc, criterion, type, elitism], pm, elitism];
+		  mated = mutationAll[crossoverParents[mating, pc, criterion, type, elitism], pm, type, elitism];
 		  new = generatePop[Length[pop] - nfittests, Length[pop[[1]]]];
 		  Return[purge[Join[new, mated]]];
 	       ];
-	       Return[purge[mutationAll[crossoverParents[pop, pc, criterion, type, elitism], pm, elitism, multi]]];
+	       Return[purge[mutationAll[crossoverParents[pop, pc, criterion, type, elitism], pm, type, elitism, multi]]];
 	]; (*Restituisce una popolazione di nuovi individui*)
 	
 (*RICHIEDE MATHEMATICA 8*)	
@@ -951,12 +953,173 @@ buildFromScratch[order_Integer] :=
 	       used = {};
 	       i = 1;
 	       While[i <= order,
-		     While[Length[Intersection[goods[[n]], used]] =!= 0,
-			    n = Random[Integer, {1, Length[goods]}];
+		     While[Length[goods] =!= 0,
+			   n = Random[Integer, {1, Length[goods]}];
+			   If[Length[Intersection[goods[[n]], used]] === 0,
+			      Break[];
+			      Break[],
+			      goods = Drop[goods, {n}];
+			   ];
+		     ];
+		     (*TODO: FARE QUALCOSA ANCHE QUANDO NON FUNZIONA*)
+		     If[Length[goods] === 0,
+			Print["La costruzione non ha funzionato"];
+			Abort[];
 		     ];
 		     ret[[i]] = goods[[n]];
 		     used = Flatten[Append[used, ret[[i]]]];
 		     i += 1;
 	       ];
+	       Return[ret];
+	];
+
+
+(*
+__  ___            _  __                 
+\ \/ (_) ___      | |/ /__ _ _ __   __ _ 
+ \  /| |/ _ \_____| ' // _` | '_ \ / _` |
+ /  \| |  __/_____| . \ (_| | | | | (_| |
+/_/\_\_|\___|     |_|\_\__,_|_| |_|\__, |
+                                   |___/ 
+    _    _                  _ _   _               
+   / \  | | __ _  ___  _ __(_) |_| |__  _ __ ___  
+  / _ \ | |/ _` |/ _ \| '__| | __| '_ \| '_ ` _ \ 
+ / ___ \| | (_| | (_) | |  | | |_| | | | | | | | |
+/_/   \_\_|\__, |\___/|_|  |_|\__|_| |_|_| |_| |_|
+           |___/
+ *)
+
+(*Segue l'impelementazione dell'argoritmo di Xie Kang*)
+(*Maggiori informazioni disponibili al link:
+http://ieeexplore.ieee.org/xpl/abstractAuthors.jsp?arnumber=1299763 *)
+
+(*Da ora in poi l'elemento base e' un individuo, non un quadrato*)
+
+(*Questo modulo genera e inizializa un individuo, cioe' una coppia matrice
+  del quadrato + matrice delle deviazioni*)
+(*La matrice delle deviazioni di default e' inizializzata con il valore 3*)
+(*TODO: La funzione che genera quadrati random deve essere ottimizzata!!!*)
+generateInd[order_Integer] :=
+	Module[{},
+	       Return[{generateSquare[order], ParallelTable[3, {order}, {order}]}];
+	];
+
+(*Eseguo queste funzioni in parallelo per gli individui grossi*)
+
+(*Calcola somme delle righe di un individuo*)
+rowsTotalInd[ind_List] :=
+	Module[{},
+	       Return[ParallelTable[Plus @@ ind[[1,i]], {i,1,Length[ind[[1]]]}]];
+	];
+
+(*Calcola somme colonne di un individuo*)
+columnsTotalInd[ind_List] :=
+	Module[{},
+	       Return[Table[Plus @@ Transpose[ind[[1]]][[i]], {i,1,Length[ind[[1]]]}]];
+	];
+
+(*Calcola somme diagonali di un individuo*)
+diagonalsTotal[ind_List] :=
+	Module[{},
+	       Return[{ParallelSum[ind[[1,i,i]],{i,1,Length[ind[[1]]]}],
+		       ParallelSum[ind[[1,-i,i]],{i,1,Length[ind[[1]]]}]}];
+	];
+
+(*Calcola il numero di righe non corrette in un individuo*)
+incorrectRows[ind_List] :=
+	Module[{mv},
+	       mv = magicNumber[Length[ind[[1]]]];
+	       (*Conto le righe che sottranendo il numero magico danno 0*)
+	       Return[Count[rowsTotalInd[ind] - mv, 0]];
+	];
+
+(*Calcola il numero di colonne non corrette in un individuo*)
+incorrectColumns[ind_List] :=
+	Module[{mv},
+	       mv = magicNumber[Length[ind[[1]]]];
+	       (*Conto le colonne che sottranendo il numero magico danno 0*)
+	       Return[Count[columnsTotalInd[ind] - mv, 0]];
+	];
+
+
+(*Rettificazione ad una coppia*)
+
+(*Scambia due elementi che sono in righe diverse ma nella
+  stessa colonna se cio' porta alla somma magica*)
+rectifyRowsWithOnePair[ind_List] :=
+	Module[{mv, order, rows, subs},
+	       order = Length[ind[[1]]];
+	       mv = magicNumber[order];
+	       rows = rowsTotalInd[ind];
+	       ret = ind[[1]];
+	       (*QUESTO NON E' UN MODO ELEGANTE PER FARLO*)
+	       (*Elemento a_{i1,J1}*)
+	       For[i1 = 1, i1 <= order, i1++,  (*Riga 1*)
+		   For[j1 = 1, j1 <= order, j1++, (*Colonna 1*)
+		       For[i2 = i1 + 1, i2 <= order, i2++, (*Scorro la colonna*)
+			   If[(rows[[i1]] - mv) === (mv - rows[[i2]]) &&
+			     (ind[[1, i1, j1]] - ind[[1, i2, j1]] === rows[[i1]] - mv),
+			      subs = {ind[[1, i1, j1]] -> ind[[1, i2, j1]],
+				      ind[[1, i2, j1]] -> ind[[1, i1, j1]]};
+			      ret = ret /. subs;
+			   ];
+		       ];
+		   ];   
+	       ];
+	       Return[{ret, ind[[2]]}];
+	];
+
+(*Scambia due elementi che sono in colonne diverse ma nella
+  stessa riga se cio' porta alla somma magica*)
+rectifyColumnsWithOnePair[ind_List] :=
+	Module[{trind, rect, ret},
+	       trind = {Transpose[ind[[1]]], ind[[2]]};
+	       rect = rectifyRownWithOnePair[trind];
+	       ret = {Transpose[rect[[1]]], ind[[2]]};
+	       Return[ret];
+	];
+
+
+(*Rettificazioni a due coppie*)
+
+
+(*Scambia due coppie che sono in righe diverse e in
+  colonne diverse se cio' porta alla somma magica*)
+rectifyRowsWithTwoPairs[ind_List] :=
+	Module[{mv, order, rows, subs},
+	       order = Length[ind[[1]]];
+	       mv = magicNumber[order];
+	       rows = rowsTotalInd[ind];
+	       ret = ind[[1]];
+	       (*QUESTO NON E' UN MODO ELEGANTE PER FARLO*)
+	       (*Elemento a_{i1,J1}*)
+	       For[i1 = 1, i1 <= order, i1++,  (*Riga 1*)
+		   For[j1 = 1, j1 <= order, j1++, (*Colonna 1*)
+		       For[i2 = i1 + 1, i2 <= order, i2++, (*Scorro la colonna*)
+			   For[j2 = j1 + 1, j2 <= order, j2++,
+			       If[(rows[[i1]] - mv) === (mv - rows[[i2]]) &&
+				  (ind[[1, i1, j1]] + ind[[1, i1, j2]]
+				   - ind[[1, i2, j2]] - ind[[1, i2, j1]]
+                                   === rows[[i1]] - mv),
+				  subs = {ind[[1, i1, j1]] -> ind[[1, i2, j2]],
+					  ind[[1, i2, j2]] -> ind[[1, i1, j1]],
+					  ind[[1, i1, j2]] -> ind[[1, i2, j1]],
+					  ind[[1, i2, j1]] -> ind[[1, i1, j2]]};
+				  ret = ret /. subs;
+			       ];
+			   ];
+		       ];
+		   ];
+	       ];
+	       Return[{ret, ind[[2]]}];
+	];
+
+(*Scambia due coppie che sono in colonne diverse e in
+  righe diverse se cio' porta alla somma magica*)
+rectifyColumnsWithTwoPairs[ind_List] :=
+	Module[{trind, rect, ret},
+	       trind = {Transpose[ind[[1]]], ind[[2]]};
+	       rect = rectifyRowsWithTwoPairs[trind];
+	       ret = {Transpose[rect[[1]]], ind[[2]]};
 	       Return[ret];
 	];
