@@ -1,4 +1,4 @@
-# GeneticMathematica
+# MagicMathematicaSquare
 Magic.m is a collection of tools to solve an NxN normal magic square using different stochastic tecniques: genetic algorithm and evolutionary algorithm.
 
 The genetic approach contains:
