@@ -1001,53 +1001,184 @@ http://ieeexplore.ieee.org/xpl/abstractAuthors.jsp?arnumber=1299763 *)
 (*TODO: La funzione che genera quadrati random deve essere ottimizzata!!!*)
 generateInd[order_Integer] :=
 	Module[{},
-	       Return[{generateSquare[order], ParallelTable[3, {order}, {order}]}];
+	     Return[{generateSquare[order], ParallelTable[order^2, {order}, {order}]}];
 	];
 
 (*Eseguo queste funzioni in parallelo per gli individui grossi*)
 
 (*Calcola somme delle righe di un individuo*)
+(*Total e' molto piu' efficiente di Plus @@ *)
 rowsTotalInd[ind_List] :=
 	Module[{},
-	       Return[ParallelTable[Plus @@ ind[[1,i]], {i,1,Length[ind[[1]]]}]];
+	       Return[ParallelTable[Total[ind[[1,i]]], {i,1,Length[ind[[1]]]}]];
 	];
 
 (*Calcola somme colonne di un individuo*)
 columnsTotalInd[ind_List] :=
 	Module[{},
-	       Return[Table[Plus @@ Transpose[ind[[1]]][[i]], {i,1,Length[ind[[1]]]}]];
+	       Return[Table[Total[Transpose[ind[[1]]][[i]]], {i,1,Length[ind[[1]]]}]];
 	];
 
 (*Calcola somme diagonali di un individuo*)
-diagonalsTotal[ind_List] :=
+diagonalsTotalInd[ind_List] :=
 	Module[{},
 	       Return[{ParallelSum[ind[[1,i,i]],{i,1,Length[ind[[1]]]}],
 		       ParallelSum[ind[[1,-i,i]],{i,1,Length[ind[[1]]]}]}];
 	];
 
+(*Calcola somme diagonali di un quadrato*)
+diagonalsTotal[square_List] :=
+	Module[{},
+	       Return[{ParallelSum[square[[i,i]],{i,1,Length[square]}],
+		       ParallelSum[square[[-i,i]],{i,1,Length[square]}]}];
+	];
+
 (*Calcola il numero di righe non corrette in un individuo*)
 incorrectRows[ind_List] :=
-	Module[{mv},
-	       mv = magicNumber[Length[ind[[1]]]];
+	Module[{},
 	       (*Conto le righe che sottranendo il numero magico danno 0*)
-	       Return[Count[rowsTotalInd[ind] - mv, 0]];
+	       Return[Length[ind[[1]]] - Count[rowsDeviation[ind], 0]];
 	];
 
 (*Calcola il numero di colonne non corrette in un individuo*)
 incorrectColumns[ind_List] :=
-	Module[{mv},
-	       mv = magicNumber[Length[ind[[1]]]];
+	Module[{},
 	       (*Conto le colonne che sottranendo il numero magico danno 0*)
-	       Return[Count[columnsTotalInd[ind] - mv, 0]];
+	       Return[Length[ind[[1]]] - Count[columnsDeviation[ind], 0]];
 	];
 
+(*Calcola il numero di diagonali non corrette in un individuo*)
+incorrectDiagonals[ind_List] :=
+	Module[{},
+	       (*Conto le diagonali che sottranendo il numero magico danno 0*)
+	       Return[2 - Count[diagonalsDeviation[ind], 0]];
+	];
+
+(*Restituisce una lista contenete la differenza tra la righe e il valore magico*)
+rowsDeviation[ind_List] :=
+	Module[{mv},
+	       mv = magicNumber[Length[ind[[1]]]];
+	       Return[Abs[rowsTotalInd[ind] - mv]];
+	];
+
+(*Restituisce una lista contenete la differenza tra le colonne e il valore magico*)
+columnsDeviation[ind_List] :=
+	Module[{mv},
+	       mv = magicNumber[Length[ind[[1]]]];
+	       Return[Abs[columnsTotalInd[ind] - mv]];
+	];
+
+(*Restituisce una lista contenete la differenza tra le diagonali e il valore magico*)
+diagonalsDeviation[ind_List] :=
+	Module[{mv},
+	       mv = magicNumber[Length[ind[[1]]]];
+	       Return[Abs[diagonalsTotalInd[ind] - mv]];
+	];
+
+(*Funzione di fitness di un individuo*)
+fitnessInd[ind_List] :=
+	Module[{inclin},
+	       inclin = incorrectRows[ind] + incorrectColumns[ind];
+	       If[inclin === 0,
+		  (*HA SENSO STA ROBA?*)
+		  Return[-diagonalsDeviation[ind]],
+		  Return[Total[rowsDeviation[ind] + columnsDeviation[ind]]];
+	       ];
+	];
+
+(*Funzione di fitness di una popolazione di individui*)
+fitnessPopInd[pop_List] :=
+	Module[{},
+	       Return[fitnessInd /@ pop];
+	];
+
+(*Seleziona il figlio migliore*)
+fittestChild[pop_List] :=
+	Module[{fp},
+	       fp = fitnessPopInd[pop];
+	       Return[pop[[Position[fp, Min[fp]][[1,1]]]]];
+	];
+
+(*Calcola il valore di sigma t, che e' un parametro che serve per la nuova
+  varianza dopo le mutazioni*)
+sigmat[ind_List] :=
+	Module[{nincorrect},
+	       nincorrect = incorrectRows[ind] + incorrectColumns[ind];
+	       If[nincorrect =!= 0,
+		  Return[Total[rowsDeviation[ind]] + Total[columnsDeviation[ind]] /
+						     nincorrect],
+		  Return[Total[diagonalsDeviation[ind]]/incorrectDiagonals[ind]];
+	       ];
+	];
+
+(*Esegue le mutazioni su un individuo*)
+mutateInd[ind_List] :=
+	Module[{order, S1, S2, mutnum, incorrectrows, incorrectcolumns, pm, i, j,
+	       ret, incorrectdiagonals, inclin, ran, subs, S2r, S2c},
+	       order = Length[ind[[1]]];
+
+	       incorrectrows = incorrectRows[ind];
+	       incorrectcolumns = incorrectColumns[ind];
+	       inclin = incorrectrows + incorrectcolumns;
+	       (*inclin sono le linee incorrette*)
+	       incorrectdiagonals = incorrectDiagonals[ind];
+
+	       ret = ind[[1]];
+
+	       (*Se tutte le righe e le colonne sono ok faccio solo permutazioni
+                 di linee a caso*)
+	       If[inclin === 0 && incorrectdiagonals === 0, Return[ret]];
+	       If[inclin === 0 && incorrectdiagonals =!= 0,
+		  mutnum = Random[Integer, {1,2}]; (*1 scambio righe, 2 colonne*)
+		  Switch[mutnum,
+			 1, (*Permuto righe*)
+			 ran = RandomInteger[{1, order}];
+			 subs = {ret[[ran[[1]]]] -> ret[[ran[[2]]]],
+				 ret[[ran[[2]]]] -> ret[[ran[[1]]]]};
+			 Return[ret /. subs],
+			 2, (*Permuto colonne*)
+			 ran = RandomInteger[{1, order}];
+			 ret = Transpose[ret];
+			 subs = {ret[[ran[[1]]]] -> ret[[ran[[2]]]],
+				 ret[[ran[[2]]]] -> ret[[ran[[1]]]]};
+			 Return[Transpose[ret /. subs]]
+		  ];
+	       ];			 
+	       
+	       If[inclin =!= 0,
+		  (*set1 e' l'insieme dei numeri la cui colonna e riga non e' magica*)
+		  S1 = {};
+		  (*set2 e' l'insieme dei numeri in righe o colonne non magiche*)
+		  S2 = {};
+		  (*Seleziona una mutazione casuale*)
+		  mutnum = Random[Integer, {1,3}];
+		  Switch[mutnum,
+			 1, (*S1 in S2*)
+			 pm = N[1/(incorrectrows incorrectcolumns)];
+			 For[i = 1, i <= order, i++,
+			     For[j = 1, j <= order, j++,
+				 If[Random[] <= pm, Return[]
+(*APPLICA MUTAZIONE*)
+				 ];
+			     ];
+			 ];
+			 Return[],
+			 2, (*S2 in S2*)
+			 pm = N[1/(incorrectrows incorrectcolumns)];
+			 Return[],
+			 3, (*S2 in tutto*)
+			 Return[]
+		  ];
+	       ];
+	       
+	];
 
 (*Rettificazione ad una coppia*)
 
 (*Scambia due elementi che sono in righe diverse ma nella
   stessa colonna se cio' porta alla somma magica*)
 rectifyRowsWithOnePair[ind_List] :=
-	Module[{mv, order, rows, subs},
+	Module[{mv, order, rows, subs, ret, i1, i2, j1},
 	       order = Length[ind[[1]]];
 	       mv = magicNumber[order];
 	       rows = rowsTotalInd[ind];
@@ -1058,10 +1189,13 @@ rectifyRowsWithOnePair[ind_List] :=
 		   For[j1 = 1, j1 <= order, j1++, (*Colonna 1*)
 		       For[i2 = i1 + 1, i2 <= order, i2++, (*Scorro la colonna*)
 			   If[(rows[[i1]] - mv) === (mv - rows[[i2]]) &&
-			     (ind[[1, i1, j1]] - ind[[1, i2, j1]] === rows[[i1]] - mv),
-			      subs = {ind[[1, i1, j1]] -> ind[[1, i2, j1]],
-				      ind[[1, i2, j1]] -> ind[[1, i1, j1]]};
+			     (ret[[i1, j1]] - ret[[i2, j1]] === rows[[i1]] - mv),
+			      subs = {ret[[i1, j1]] -> ret[[i2, j1]],
+				      ret[[i2, j1]] -> ret[[i1, j1]]};
 			      ret = ret /. subs;
+			      (*Bisogna aggiornare il valore delle somme*)
+			      rows[[i1]] = Total[ret[[i1]]];
+			      rows[[i2]] = Total[ret[[i2]]];
 			   ];
 		       ];
 		   ];   
@@ -1074,7 +1208,7 @@ rectifyRowsWithOnePair[ind_List] :=
 rectifyColumnsWithOnePair[ind_List] :=
 	Module[{trind, rect, ret},
 	       trind = {Transpose[ind[[1]]], ind[[2]]};
-	       rect = rectifyRownWithOnePair[trind];
+	       rect = rectifyRowsWithOnePair[trind];
 	       ret = {Transpose[rect[[1]]], ind[[2]]};
 	       Return[ret];
 	];
@@ -1082,11 +1216,10 @@ rectifyColumnsWithOnePair[ind_List] :=
 
 (*Rettificazioni a due coppie*)
 
-
 (*Scambia due coppie che sono in righe diverse e in
   colonne diverse se cio' porta alla somma magica*)
 rectifyRowsWithTwoPairs[ind_List] :=
-	Module[{mv, order, rows, subs},
+	Module[{mv, order, rows, subs, ret, i1, i2, j1, j2},
 	       order = Length[ind[[1]]];
 	       mv = magicNumber[order];
 	       rows = rowsTotalInd[ind];
@@ -1098,14 +1231,16 @@ rectifyRowsWithTwoPairs[ind_List] :=
 		       For[i2 = i1 + 1, i2 <= order, i2++, (*Scorro la colonna*)
 			   For[j2 = j1 + 1, j2 <= order, j2++,
 			       If[(rows[[i1]] - mv) === (mv - rows[[i2]]) &&
-				  (ind[[1, i1, j1]] + ind[[1, i1, j2]]
-				   - ind[[1, i2, j2]] - ind[[1, i2, j1]]
+				  (ret[[i1, j1]] + ret[[i1, j2]]
+				   - ret[[i2, j2]] - ret[[i2, j1]]
                                    === rows[[i1]] - mv),
-				  subs = {ind[[1, i1, j1]] -> ind[[1, i2, j2]],
-					  ind[[1, i2, j2]] -> ind[[1, i1, j1]],
-					  ind[[1, i1, j2]] -> ind[[1, i2, j1]],
-					  ind[[1, i2, j1]] -> ind[[1, i1, j2]]};
+				  subs = {ret[[i1, j1]] -> ret[[i2, j2]],
+					  ret[[i2, j2]] -> ret[[i1, j1]],
+					  ret[[i1, j2]] -> ret[[i2, j1]],
+					  ret[[i2, j1]] -> ret[[i1, j2]]};
 				  ret = ret /. subs;
+				  rows[[i1]] = Total[ret[[i1]]];
+				  rows[[i2]] = Total[ret[[i2]]];
 			       ];
 			   ];
 		       ];
@@ -1122,4 +1257,149 @@ rectifyColumnsWithTwoPairs[ind_List] :=
 	       rect = rectifyRowsWithTwoPairs[trind];
 	       ret = {Transpose[rect[[1]]], ind[[2]]};
 	       Return[ret];
+	];
+
+(*Sistema le diagonali con scambi intelligenti*)
+rectifyDiagonals[ind_List] :=
+	Module[{order, ret, j1, j2, diag1, diag2, temp},
+	       order = Length[ind[[1]]];
+	       mv = magicNumber[order];
+	       {diag1, diag2} = diagonalsTotalInd[ind];
+	       ret = ind[[1]];
+	       (*QUESTO NON E' UN MODO ELEGANTE PER FARLO*)
+	       (*Prima rettificazione*)
+	       (*Elemento a_{i1,J1}*)
+	       For[i1 = 1, i1 <= order, i1++,  (*Riga 1*)
+		   For[j1 = 1, j1 <= order, j1++, (*Colonna 1*)
+		       If[i1 =!= j1, 		       
+			  If[(ret[[i1, i1]] + ret[[i1, j1]] ===
+                              ret[[j1, j1]] + ret[[j1, i1]]) &&
+			     (ret[[i1, i1]] + ret[[j1, j1]] -
+			      ret[[i1, j1]] - ret[[j1, i1]] === diag1 - mv),
+			     subs = {ret[[i1, i1]] -> ret[[j1, i1]],
+				     ret[[j1, i1]] -> ret[[i1, i1]],
+				     ret[[i1, j1]] -> ret[[j1, j1]],
+				     ret[[j1, j1]] -> ret[[i1, j1]]};
+			     ret = ret /. subs;
+			     {diag1, diag2} = diagonalsTotal[ret];
+			  ];
+		       ];
+		   ];   
+	       ];
+	       (*Seconda rettificazione*)
+	       For[i1 = 1, i1 <= order, i1++,  (*Riga 1*)
+		   For[j1 = 1, j1 <= order, j1++, (*Colonna 1*)
+		       If[i1 =!= j1, 		       
+			  If[(ret[[i1, j1]] +
+			      ret[[i1, order - i1 + 1]]
+                              === ret[[order - j1 + 1, j1]] +
+			      ret[[order - j1 + 1 , order - i1 + 1]]) &&
+			     (ret[[i1, order - i1 + 1]] +
+			      ret[[order - j1 +1, j1]] -
+			      ret[[i1, j1]] -
+			      ret[[order - j1 + 1, order - i1 +1]]
+                              === diag2 - mv),
+			     subs = {ret[[i1, j1]] ->
+				     ret[[order - j1 +1, j1]],
+				     ret[[order - j1 +1, j1]] ->
+				     ret[[i1, j1]],
+				     ret[[i1, order - i1 + 1]] ->
+				     ret[[order - j1 + 1, order - i1 +1]],
+				     ret[[order - j1 + 1, order - i1 +1]] ->
+			             ret[[i1, order - i1 + 1]]};
+			     ret = ret /. subs;
+			     {diag1, diag2} = diagonalsTotal[ret];
+			  ];
+		       ];
+		   ];   
+	       ];
+
+	       (*NON TESTATA!!!!*)
+	       (*Terza rettificazione*)
+	       For[i1 = 1, i1 <= order, i1++,  (*Riga 1*)
+		   For[j1 = 1, j1 <= order, j1++, (*Colonna 1*)
+		       If[i1 =!= j1, 
+			  If[(ret[[i1, i1]] + ret[[j1, j1]] -
+			      ret[[i1, j1]] - ret[[j1, i1]]
+                              === diag1 - mv) &&
+			     (ret[[i1, order - i1 + 1]] +
+			      ret[[j1, order - j1 + 1]] -
+			      ret[[i1, order - j1 + 1]] -
+			      ret[[j1, order - i1 + 1]]
+                              === diag2 - mv),
+			     subs = {ret[[i1]] -> ret[[j1]],
+				     ret[[j1]] -> ret[[i1]]};
+			     ret = ret /. subs;
+			     {diag1, diag2} = diagonalsTotal[ret];
+			     If[incorrectDiagonals[ret] === 0,
+				Print["TERZA RETTIFICAZIONE!!!"];
+			     ];
+			  ];
+		       ];
+		   ];   
+	       ];
+
+	       (*NON TESTATA!!!!*)
+	       (*Quarta rettificazione*)
+	       For[i1 = 1, i1 <= order, i1++,  (*Riga 1*)
+		   For[j1 = 1, j1 <= order, j1++, (*Colonna 1*)
+		       If[i1 =!= j1, 
+			  If[(ret[[i1, i1]] + ret[[j1, j1]] -
+			      ret[[i1, j1]] - ret[[j1, i1]]
+                              === diag1 - mv) &&
+			     (ret[[order - i1 + 1, i1]] +
+			      ret[[order - j1 + 1, j1]] -
+			      ret[[order - j1 + 1, i1]] -
+			      ret[[order - i1 + 1, j1]]
+                              === diag2 - mv),
+			     temp = Transpose[ret];
+			     subs = {temp[[i1]] -> temp[[j1]],
+				     temp[[j1]] -> temp[[i1]]};
+			     temp = temp /. subs;
+			     ret = Transpose[temp];
+			     {diag1, diag2} = diagonalsTotal[ret];
+			     If[incorrectDiagonals[ret] === 0,
+				Print["QUARTA RETTIFICAZIONE!!!"];
+			     ];
+			  ];
+		       ];
+		   ];   
+	       ];
+
+	       (*Quinta rettificazione*)
+	       (*NON TESTATA!!!*)
+	       For[i1 = 1, i1 <= order, i1++,  (*Riga 1*)
+		   For[j1 = 1, j1 <= order, j1++, (*Colonna 1*)
+		       If[i1 =!= j1, 
+			  If[(ret[[i1, i1]] +
+			      ret[[order - i1 + 1, order - i1 + 1]] -
+			      ret[[i1, order - i1 + 1]] -
+			      ret[[order -i1 + 1, i1]]
+                              === diag1 - mv) &&
+			     (diag1 - mv  === mv - diag2),
+			     subs = {ret[[i1]] -> ret[[order - i1 + 1]],
+				     ret[[order -i1 + 1]] -> ret[[i1]]};
+			     ret = ret /. subs;
+			     {diag1, diag2} = diagonalsTotal[ret];
+			     If[incorrectDiagonals[ret] === 0,
+				Print["QUINTA RETTIFICAZIONE!!!"];
+			     ];
+			  ];
+		       ];
+		   ];   
+	       ];	       
+	       
+	       Return[{ret, ind[[2]]}];
+	];
+
+
+xiekang[order_Integer] :=
+	Module[{father, offspring, gen, fitbest},
+	       father = generateInd[order];
+	       gen = 0;
+
+	       offspring = ParallelTable[father, {10}];
+	       While[fitbest > 0,
+		     offspring = ParallelMap[mutateInd, offspring];
+	       ];
 	];
