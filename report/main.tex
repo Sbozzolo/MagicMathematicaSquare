@@ -1,0 +1,288 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Journal Article
+% LaTeX Template
+% Version 1.4 (15/5/16)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% Frits Wenneker (http://www.howtotex.com) with extensive modifications by
+% Vel (vel@LaTeXTemplates.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[twoside,twocolumn]{article}
+
+
+\usepackage{blindtext} % Package to generate dummy text throughout this template 
+
+\usepackage[utf8]{inputenc}
+
+\usepackage[sc]{mathpazo} % Use the Palatino font
+\usepackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
+\linespread{1.05} % Line spacing - Palatino needs more space between lines
+\usepackage{microtype} % Slightly tweak font spacing for aesthetics
+
+\usepackage[italian]{babel} % Language hyphenation and typographical rules
+
+\usepackage[hmarginratio=1:1,top=32mm,columnsep=20pt]{geometry} % Document margins
+\usepackage[hang, small,labelfont=bf,up,textfont=it,up]{caption} % Custom captions under/above floats in tables or figures
+\usepackage{booktabs} % Horizontal rules in tables
+
+\usepackage{lettrine} % The lettrine is the first enlarged letter at the beginning of the text
+
+\usepackage{enumitem} % Customized lists
+\setlist[itemize]{noitemsep} % Make itemize lists more compact
+
+\usepackage{abstract} % Allows abstract customization
+\renewcommand{\abstractnamefont}{\normalfont\bfseries} % Set the "Abstract" text to bold
+\renewcommand{\abstracttextfont}{\normalfont\small\itshape} % Set the abstract itself to small italic text
+
+\usepackage{titlesec} % Allows customization of titles
+\renewcommand\thesection{\Roman{section}} % Roman numerals for the sections
+\renewcommand\thesubsection{\roman{subsection}} % roman numerals for subsections
+\titleformat{\section}[block]{\large\scshape\centering}{\thesection.}{1em}{} % Change the look of the section titles
+\titleformat{\subsection}[block]{\large}{\thesubsection.}{1em}{} % Change the look of the section titles
+
+\usepackage{fancyhdr} % Headers and footers
+\pagestyle{fancy} % All pages have headers and footers
+\fancyhead{} % Blank out the default header
+\fancyfoot{} % Blank out the default footer
+\fancyhead[C]{Metodi Computazionali della Fisica} % Custom header text
+\fancyfoot[RO,LE]{\thepage} % Custom footer text
+
+\usepackage{titling} % Customizing the title section
+
+\usepackage{hyperref} % For hyperlinks in the PDF
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\setlength{\droptitle}{-4\baselineskip} % Move the title up
+
+\pretitle{\begin{center}\Huge\bfseries} % Article title formatting
+\posttitle{\end{center}} % Article title closing formatting
+\title{Studio di algoritmi stocastici per la costruzione di quadrati magici} % Article title
+\author{%
+\textsc{Gabriele Bozzola} \\[1ex] % Your name
+\normalsize Università degli Studi di Milano \\ % Your institution
+\normalsize \href{mailto:bozzola.gabriele@gmail.com}{bozzola.gabriele@gmail.com} % Your email address
+%\and % Uncomment if 2 authors are required, duplicate these 4 lines if more
+%\textsc{Jane Smith}\thanks{Corresponding author} \\[1ex] % Second author's name
+%\normalsize University of Utah \\ % Second author's institution
+%\normalsize \href{mailto:jane@smith.com}{jane@smith.com} % Second author's email address
+}
+\date{Luglio 2016} % Leave empty to omit a date
+\renewcommand{\maketitlehookd}{%
+\begin{abstract}
+\noindent In questo lavoro vengono presentati due algoritmi stocastici per costruire quadrati magici normali. Il primo è un algoritmo genetico realizzato utilizzando diverse funzioni di fitness e metodi di selezione, mentre il secondo è un algoritmo evolutivo, basato sul lavoro di Xie e Kang. 
+\end{abstract}
+}
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+% Print the title
+\maketitle
+
+%----------------------------------------------------------------------------------------
+%	ARTICLE CONTENTS
+%----------------------------------------------------------------------------------------
+
+\section{Introduzione}
+
+\lettrine[nindent=0em,lines=3]{U}n quadrato magico di ordine $ N $ è una matrice quadrata $ N\times N $ contenente tutti i numeri naturali distinti tale che la somma dei valori su ciascuna riga, colonna e diagonale sia sempre la stessa, detta \emph{numero magico}. Qualora i numeri che compaiono sono i primi $ N^2 $ allora si il quadrato è detto \emph{normale}. Gli algoritmi sono quindi implementati in Mathematica 8.
+
+\subsection{Definizione e utilizzi}
+
+
+\subsection{Proprietà}
+
+\blindtext % Dummy text
+
+\subsection{Stato dell'arte}
+
+\blindtext % Dummy text
+
+\section{Algoritmi genetici}
+
+\subsection{Funzioni di fitness}
+
+\subsection{Metodi di selezione}
+
+\subsection{Implementazione in Mathematica}
+
+\subsection{Conclusioni}
+
+\section{Algoritmo evolutivo}
+Per superare i problemi legati all'applicazione di un algoritmo genetico per la costruzione di quadrati magici normali si adottano due accorgimenti:
+\begin{enumerate}
+	\item Si elimina la fase di crossover e si aumenta il numero di mutazioni effettuate sul singolo individuo.
+	\item Si effettuano controlli sistematici quando l'algoritmo comincia ad essere in condizioni di stallo. 
+\end{enumerate}
+Siccome ora non vi sono più crossover non è necessario lavorare con una popolazione composta da numero elevato di individui, ma se ne utilizza uno solo, il quale produce un numero fissato di figli. 
+
+In questo lavoro è stata implementato un'algoritmo basato su quello proposto da  Xie e Kang in \cite{XieKang:2003}.
+
+\subsection{Algoritmo di Xie-Kang}
+
+Tale algoritmo implementa i due miglioramenti esposti all'inizio di questa sezione e aggiunge un ulteriore contributo fondamentale: \emph{la congettura della costruzione a due fasi}.
+
+\subsubsection{Congettura della costruzione a due fasi}
+Una matrice composta da numeri naturali differenti $ N\times N $ è detta \emph{quadrato semimagico} se è un quadrato magico a meno delle diagonali, ovvero se la somma ddei valori su tutte le righe e su tutte le colonne è uguale al numero magico. Un quadrato semimagico è normale se le sue entrate sono tutti i numeri da $ 1 $ a $ N^2 $. 
+
+La congettura della costruzione a due fasi di Xie e Kang afferma che un quadrato semimagico è sempre completabile ad un quadrato magico utilizzando un numero finito di permutazioni di righe e di colonne oppure di rettificazioni locali. 
+
+\subsection{Metodi di selezione}
+
+\subsection{Mutazioni}
+
+\subsubsection{Mutazioni puntuali}
+
+\subsection{Rettificazioni locali}
+
+\subsection{Implementazione in Mathematica}
+
+%------------------------------------------------
+
+\section{Methods}
+
+Maecenas sed ultricies felis. Sed imperdiet dictum arcu a egestas. 
+\begin{itemize}
+\item Donec dolor arcu, rutrum id molestie in, viverra sed diam
+\item Curabitur feugiat
+\item turpis sed auctor facilisis
+\item arcu eros accumsan lorem, at posuere mi diam sit amet tortor
+\item Fusce fermentum, mi sit amet euismod rutrum
+\item sem lorem molestie diam, iaculis aliquet sapien tortor non nisi
+\item Pellentesque bibendum pretium aliquet
+\end{itemize}
+\blindtext % Dummy text
+
+Text requiring further explanation\footnote{Example footnote}.
+
+%------------------------------------------------
+
+\section{Risultati}
+
+\begin{table}
+\caption{Example table}
+\centering
+\begin{tabular}{llr}
+\toprule
+\multicolumn{2}{c}{Name} \\
+\cmidrule(r){1-2}
+First name & Last Name & Grade \\
+\midrule
+John & Doe & $7.5$ \\
+Richard & Miles & $2$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\blindtext % Dummy text
+
+\begin{equation}
+\label{eq:emc}
+e = mc^2
+\end{equation}
+
+\blindtext % Dummy text
+
+%------------------------------------------------
+
+\section{Conclusioni}
+
+\subsection{Subsection One}
+
+A statement requiring citation \cite{XieKang:2003}.
+\blindtext % Dummy text
+
+\subsection{Subsection Two}
+
+\blindtext % Dummy text
+
+
+\section{Appendice}
+
+Esempio rettificazione su riga 1:
+
+Prima: 
+
+\begin{tabular}{|c|c|c|}
+	\hline 
+	\rule[-1ex]{0pt}{2.5ex} 1 & 5 & 6 \\ 
+	\hline 
+	\rule[-1ex]{0pt}{2.5ex} 4 & 3 & 8 \\ 
+	\hline 
+	\rule[-1ex]{0pt}{2.5ex} 2 & 7 & 9 \\ 
+	\hline 
+\end{tabular} 
+
+Dopo: 
+
+\begin{tabular}{|c|c|c|}
+	\hline 
+	\rule[-1ex]{0pt}{2.5ex} 1 & 5 & 9 \\ 
+	\hline 
+	\rule[-1ex]{0pt}{2.5ex} 4 & 3 & 8 \\ 
+	\hline 
+	\rule[-1ex]{0pt}{2.5ex} 2 & 7 & 6 \\ 
+	\hline 
+\end{tabular} 
+
+
+Esempio di rettificazione diagonale 2:
+
+Prima:
+
+\begin{tabular}{|c|c|c|}
+	\hline 
+	\rule[-1ex]{0pt}{2.5ex} 9 & 5 & 1 \\ 
+	\hline 
+	\rule[-1ex]{0pt}{2.5ex} 3 & 4 & 2 \\ 
+	\hline 
+	\rule[-1ex]{0pt}{2.5ex} 8 & 7 & 6 \\ 
+	\hline 
+\end{tabular} 
+
+Dopo:
+
+\begin{tabular}{|c|c|c|}
+	\hline 
+	\rule[-1ex]{0pt}{2.5ex} 9 & \textbf{4} & \textbf{2} \\ 
+	\hline 
+	\rule[-1ex]{0pt}{2.5ex} 3 & \textbf{5} & \textbf{1} \\ 
+	\hline 
+	\rule[-1ex]{0pt}{2.5ex} 8 & 7 & 6 \\ 
+	\hline 
+\end{tabular} 
+
+
+%----------------------------------------------------------------------------------------
+%	REFERENCE LIST
+%----------------------------------------------------------------------------------------
+
+\begin{thebibliography}{99} % Bibliography - this is intentionally simple in this template
+
+\bibitem{XieKang:2003}
+Xie, T. e Kang, L. (2003).
+\newblock An Evolutionary Algorithm for Magic Squares.
+\newblock {\em The 2003 Congress on Evolutionary Computation, 2003}.
+
+ 
+\end{thebibliography}
+
+%----------------------------------------------------------------------------------------
+
+\end{document}
