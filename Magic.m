@@ -17,7 +17,7 @@ entrambe le diagonali dia sempre lo stesso numero, il numero magico*)
 (*fitness, whoIsTheBest, divideInterval, targetFitnessPop e nel run*)
 (*anche in sortpop*)
    
-If[$VersionNumber < 8, Print["Questo programma richiede Mathematica 8"]]
+If[$VersionNumber < 8, Print["Questo programma richiede Mathematica 8"]];
 
 (*Messaggio di benvenuto*)
 Print["Benveuto in MagicMathematicaSquare"]
@@ -1001,7 +1001,7 @@ http://ieeexplore.ieee.org/xpl/abstractAuthors.jsp?arnumber=1299763 *)
 (*TODO: La funzione che genera quadrati random deve essere ottimizzata!!!*)
 generateInd[order_Integer] :=
 	Module[{},
-	     Return[{generateSquare[order], ParallelTable[order^2, {order}, {order}]}];
+	     Return[{generateSquare[order], Table[order^2, {order}, {order}]}];
 	];
 
 (*Eseguo queste funzioni in parallelo per gli individui grossi*)
@@ -1010,7 +1010,7 @@ generateInd[order_Integer] :=
 (*Total e' molto piu' efficiente di Plus @@ *)
 rowsTotalInd[ind_List] :=
 	Module[{},
-	       Return[ParallelTable[Total[ind[[1,i]]], {i,1,Length[ind[[1]]]}]];
+	       Return[Table[Total[ind[[1,i]]], {i,1,Length[ind[[1]]]}]];
 	];
 
 (*Calcola somme colonne di un individuo*)
@@ -1022,15 +1022,15 @@ columnsTotalInd[ind_List] :=
 (*Calcola somme diagonali di un individuo*)
 diagonalsTotalInd[ind_List] :=
 	Module[{},
-	       Return[{ParallelSum[ind[[1,i,i]],{i,1,Length[ind[[1]]]}],
-		       ParallelSum[ind[[1,-i,i]],{i,1,Length[ind[[1]]]}]}];
+	       Return[{(*Parallel*)Sum[ind[[1,i,i]],{i,1,Length[ind[[1]]]}],
+		       (*Parallel*)Sum[ind[[1,-i,i]],{i,1,Length[ind[[1]]]}]}];
 	];
 
 (*Calcola somme diagonali di un quadrato*)
 diagonalsTotal[square_List] :=
 	Module[{},
-	       Return[{ParallelSum[square[[i,i]],{i,1,Length[square]}],
-		       ParallelSum[square[[-i,i]],{i,1,Length[square]}]}];
+	       Return[{(*Parallel*)Sum[square[[i,i]],{i,1,Length[square]}],
+	               (*Parallel*)Sum[square[[-i,i]],{i,1,Length[square]}]}];
 	];
 
 (*Calcola il numero di righe non corrette in un individuo*)
@@ -1080,7 +1080,7 @@ fitnessInd[ind_List] :=
 	Module[{inclin},
 	       inclin = incorrectRows[ind] + incorrectColumns[ind];
 	       If[inclin === 0,
-		  Return[Total[diagonalsDeviation[ind]]],
+		  Return[-Total[diagonalsDeviation[ind]]],
 		  Return[Total[rowsDeviation[ind] + columnsDeviation[ind]]];
 	       ];
 	];
@@ -1093,9 +1093,19 @@ fitnessPopInd[pop_List] :=
 
 (*Seleziona il figlio migliore*)
 fittestChild[pop_List] :=
-	Module[{fp},
+	Module[{fp, index},
 	       fp = fitnessPopInd[pop];
-	       Return[pop[[Position[fp, Min[fp]][[1,1]]]]];
+	       (*Controllo se c'e' l'individuo perfetto*)
+	       If[Length[Position[fp, 0]] =!= 0,
+		  Return[pop[[Position[fp, 0][[1,1]]]]];
+	       ];
+	       (*Io voglio l'individuo piu' vicino a zero, ma voglio
+                 anche privilegiare chi ha fitness negativa*)
+		If[Min[fp] < 0,
+		  fp = (#)^(-1) & /@ fp
+	       ];
+	       index = Random[Integer, {1, Length[Position[fp, Min[fp]]]}];
+	       Return[pop[[Position[fp, Min[fp]][[index ,1]]]]];
 	];
 
 (*Calcola il valore di sigma t, che e' un parametro che serve per la nuova
@@ -1110,11 +1120,40 @@ sigmat[ind_List] :=
 	       ];
 	];
 
+(*Costruisce gli insiemi da cui prendere gli elementi di mutazione*)
+generateMutationSets[ind_List] :=
+	Module[{rows, cols, S2r, S2c, S2, order, ret},
+	       ret = ind[[1]];
+	       order = Length[ret];
+	       rows = rowsDeviation[ind];
+	       cols = columnsDeviation[ind];
+	       S2r = (*Parallel*)Table[If[rows[[i]] =!= 0,
+					  ret[[i,j]], (*Il numero se e' in S2r*)
+				          0], (*0 se non e' in S2r*)
+				       {i, 1, order},
+				       {j, 1, order}];
+	       S2r = Flatten[S2r];
+	       S2r = DeleteCases[S2r, 0];
+	       S2c = (*Parallel*)Table[If[cols[[j]] =!= 0,
+					  ret[[i,j]], (*Il numero se e' in S2c*)
+				          0], (*0 se non e' in S2c*)
+				       {i, 1, order},
+				       {j, 1, order}];
+	       S2c = Flatten[S2c];
+	       S2c = DeleteCases[S2c, 0];
+	       (*set1 e' l'insieme dei numeri la cui colonna e riga non e' magica*)
+	       S1 = Intersection[S2r, S2c];
+	       (*set2 e' l'insieme dei numeri in righe o colonne non magiche*)
+	       S2 = Union[S2r, S2c];
+	       Return[{S1, S2r, S2c, S2}];
+	];
+	       
+
 (*Esegue le mutazioni su un individuo*)
 mutateInd[ind_List] :=
 	Module[{order, S1, S2, mutnum, incorrectrows, incorrectcolumns, pm, i, j,
 		ret, incorrectdiagonals, inclin, ran, subs, S2r, S2c, rows, cols,
-		temp, sig, minlist, min, sc, sigt},
+		temp, sig, minlist, min, sc, sigt, reti},
 	       
 	       order = Length[ind[[1]]];
 
@@ -1134,45 +1173,31 @@ mutateInd[ind_List] :=
 		  mutnum = Random[Integer, {1,2}]; (*1 scambio righe, 2 colonne*)
 		  Switch[mutnum,
 			 1, (*Permuto righe*)
-			 ran = RandomInteger[{1, order}];
+			 ran = RandomInteger[{1, order}, 2];
 			 subs = {ret[[ran[[1]]]] -> ret[[ran[[2]]]],
 				 ret[[ran[[2]]]] -> ret[[ran[[1]]]]};
-			 Return[ret /. subs],
+			 Return[{ret /. subs, ind[[2]]}],
 			 2, (*Permuto colonne*)
-			 ran = RandomInteger[{1, order}];
+			 ran = RandomInteger[{1, order}, 2];
 			 ret = Transpose[ret];
 			 subs = {ret[[ran[[1]]]] -> ret[[ran[[2]]]],
 				 ret[[ran[[2]]]] -> ret[[ran[[1]]]]};
-			 Return[Transpose[ret /. subs]]
+			 Return[{Transpose[ret /. subs], ind[[2]]}]
 		  ];
 	       ];
-
-	       (*ATTUALMENTE C'E' UNA SOLA MUTAZIONE E LE PROBABILITA'
-                 SONO DA SISTEMARE*)
 	       
 	       If[inclin =!= 0,
-	          rows = rowsDeviation[ind];
-	          cols = columnsDeviation[ind];
-		  S2r = ParallelTable[If[rows[[i]] =!= 0,
-					 ret[[i,j]], (*Il numero se e' in S2r*)
-				         0], (*0 se non e' in S2r*)
-				      {i, 1, order},
-				      {j, 1, order}];
-		  S2r = Flatten[S2r];
-		  S2r = DeleteCases[S2r, 0];
-		  S2c = ParallelTable[If[cols[[j]] =!= 0,
-					 ret[[i,j]], (*Il numero se e' in S2c*)
-				         0], (*0 se non e' in S2c*)
-				      {i, 1, order},
-				      {j, 1, order}];
-		  S2c = Flatten[S2c];
-		  S2c = DeleteCases[S2c, 0];
-		  (*set1 e' l'insieme dei numeri la cui colonna e riga non e' magica*)
-		  S1 = Intersection[S2r, S2c];
-		  (*set2 e' l'insieme dei numeri in righe o colonne non magiche*)
-		  S2 = Union[S2r, S2c];
+		  {S1, S2r, S2c, S2} = generateMutationSets[ind];
 		  (*Seleziona una mutazione casuale*)
-		  mutnum = Random[Integer, {1,3}];
+		  (*Se S1 e' vuoto non faccio la mutazione 1*)
+		  If[S1 =!= {},
+		     mutnum = Random[Integer, {1,3}],
+		     mutnum = Random[Integer, {2,3}]
+		  ];
+		  (*CORREGGERE LE PROBABILITA'*)
+		  (*pm = N[1/order];*)
+		  pm = 1;
+		  reti = {ret, sig};
 		  Switch[mutnum,
 			 1, (*S1 in S2*)
 			 pm = N[1/(incorrectrows incorrectcolumns)];
@@ -1190,7 +1215,7 @@ mutateInd[ind_List] :=
 					  temp = order^2 - Random[Integer, {0, order}];
 				       ];
 				       (*Trovo con chi scambiarlo*)
-				       minlist = ParallelMap[Abs[# - temp] &, S2];
+				       minlist = (*Parallel*)Map[Abs[# - temp] &, S2];
 				       min = Min[minlist];
 				       sc = S2[[Position[minlist, min][[1,1]]]];
 				       (*Faccio lo scambio*)
@@ -1202,17 +1227,24 @@ mutateInd[ind_List] :=
 					  sigt = sigmat[{ret, ind[[2]]}];
 					  sig[[i,j]] = Random[Integer, {1, sigt}];
 				       ];
-				       Return[{ret, sig}];
+				       reti = {ret, sig};
+				       {S1, S2r, S2c, S2} = generateMutationSets[reti];
+				       (*Per evitare che gli insiemi si svuotino*)
+				       If[S1 === {} || S2 === {}, Return[reti]];
 				    ];
 				 ];
 			     ];
-			 ];
-			 Return[{ret, sig}],
+			 ],
 			 2, (*S2 in S2*)
-			 pm = N[1/(incorrectrows incorrectcolumns)];
 			 For[i = 1, i <= order, i++,
 			     For[j = 1, j <= order, j++,
 				 If[Count[S2, ret[[i,j]]] =!= 0,
+				    If[Count[S2r, ret[[i,j]]] =!= 0,
+				       pm *= N[1/incorrectrows]
+				    ];
+				    If[Count[S2c, ret[[i,j]]] =!= 0,
+				       pm *= N[1/incorrectcolumns]
+				    ];				       
 				    If[Random[] <= pm,
 				       (*Trovo il nuovo valore*)
 				       temp = ret[[i,j]] +
@@ -1224,7 +1256,7 @@ mutateInd[ind_List] :=
 					  temp = order^2 - Random[Integer, {0, order}];
 				       ];
 				       (*Trovo con chi scambiarlo*)
-				       minlist = ParallelMap[Abs[# - temp] &, S2];
+				       minlist = (*Parallel*)Map[Abs[# - temp] &, S2];
 				       min = Min[minlist];
 				       sc = S2[[Position[minlist, min][[1,1]]]];
 				       (*Faccio lo scambio*)
@@ -1236,16 +1268,25 @@ mutateInd[ind_List] :=
 					  sigt = sigmat[{ret, ind[[2]]}];
 					  sig[[i,j]] = Random[Integer, {1, sigt}];
 				       ];
-				       Return[{ret, sig}];
+				       reti = {ret, sig};
+				       incorrectrows = incorrectRows[reti];
+				       incorrectcolumns = incorrectColumns[reti];
+				       {S1, S2r, S2c, S2} = generateMutationSets[reti];
+				       If[S1 === {} || S2 === {}, Return[reti]];
 				    ];
 				 ];
 			     ];
-			 ];
-			 Return[{ret, sig}],
+			 ],
 			 3, (*S2 in tutto*)
-			 pm = N[1/(incorrectrows incorrectcolumns)];
+			 (*pm = N[1/(incorrectrows incorrectcolumns)];*)
 			 For[i = 1, i <= order, i++,
 			     For[j = 1, j <= order, j++,
+				 If[Count[S2r, ret[[i,j]]] =!= 0,
+				    pm *= N[1/incorrectrows]
+				 ];
+				 If[Count[S2c, ret[[i,j]]] =!= 0,
+				    pm *= N[1/incorrectcolumns]
+				 ];	
 				 If[Random[] <= pm,
 				    (*Trovo il nuovo valore*)
 				    temp = ret[[i,j]] +
@@ -1257,7 +1298,7 @@ mutateInd[ind_List] :=
 				       temp = order^2 - Random[Integer, {0, order}];
 				    ];
 				    (*Trovo con chi scambiarlo*)
-				    minlist = ParallelMap[Abs[# - temp] &, S2];
+				    minlist = (*Parallel*)Map[Abs[# - temp] &, S2];
 				    min = Min[minlist];
 				    sc = S2[[Position[minlist, min][[1,1]]]];
 				    (*Faccio lo scambio*)
@@ -1269,12 +1310,16 @@ mutateInd[ind_List] :=
 				       sigt = sigmat[{ret, ind[[2]]}];
 				       sig[[i,j]] = Random[Integer, {1, sigt}];
 				    ];
-				    Return[{ret, sig}];
+				    reti = {ret, sig};
+				    incorrectrows = incorrectRows[reti];
+				    incorrectcolumns = incorrectColumns[reti];
+				    {S1, S2r, S2c, S2} = generateMutationSets[reti];
+				    If[S1 === {} || S2 === {}, Return[reti]];
 				 ];
 			     ];
 			 ];
-			 Return[{ret, sig}];
 		  ];
+		  Return[reti];
 	       ];	       
 	];
 
@@ -1311,13 +1356,30 @@ rectifyRowsWithOnePair[ind_List] :=
 (*Scambia due elementi che sono in colonne diverse ma nella
   stessa riga se cio' porta alla somma magica*)
 rectifyColumnsWithOnePair[ind_List] :=
-	Module[{trind, rect, ret},
-	       trind = {Transpose[ind[[1]]], ind[[2]]};
-	       rect = rectifyRowsWithOnePair[trind];
-	       ret = {Transpose[rect[[1]]], ind[[2]]};
-	       Return[ret];
+	Module[{mv, order, cols, subs, ret, i1, i2, j1},
+	       order = Length[ind[[1]]];
+	       mv = magicNumber[order];
+	       cols = columnsTotalInd[ind];
+	       ret = ind[[1]];
+	       (*QUESTO NON E' UN MODO ELEGANTE PER FARLO*)
+	       (*Elemento a_{i1,J1}*)
+	       For[i1 = 1, i1 <= order, i1++,  (*Riga 1*)
+		   For[j1 = 1, j1 <= order, j1++, (*Colonna 1*)
+		       For[j2 = j1 + 1, j2 <= order, j2++, (*Scorro la colonna*)
+			   If[(cols[[j1]] - mv) === (mv - cols[[j2]]) &&
+			     (ret[[j1, i1]] - ret[[j1, j2]] === cols[[j1]] - mv),
+			      subs = {ret[[j1, i1]] -> ret[[j1, j2]],
+				      ret[[j1, j2]] -> ret[[j1, i1]]};
+			      ret = ret /. subs;
+			      (*Bisogna aggiornare il valore delle somme*)
+			      cols[[j1]] = Total[Transpose[ret][[j1]]];
+			      cols[[j2]] = Total[Transpose[ret][[j2]]];
+			   ];
+		       ];
+		   ];   
+	       ];
+	       Return[{ret, ind[[2]]}];
 	];
-
 
 (*Rettificazioni a due coppie*)
 
@@ -1334,15 +1396,20 @@ rectifyRowsWithTwoPairs[ind_List] :=
 	       For[i1 = 1, i1 <= order, i1++,  (*Riga 1*)
 		   For[j1 = 1, j1 <= order, j1++, (*Colonna 1*)
 		       For[i2 = i1 + 1, i2 <= order, i2++, (*Scorro la colonna*)
-			   For[j2 = j1 + 1, j2 <= order, j2++,
+			   For[j2 = 1, j2 <= order, j2++,
+			       (*Workaround per fare percorrere tutto
+                                 il quadrato correttamente*)
+			       If[i2 === i1 && j2 === 1, j2 = j1 +1];
+			       If[j2 > order, Break[]];
+			       If[j2 === j1, Break[]];
 			       If[(rows[[i1]] - mv) === (mv - rows[[i2]]) &&
 				  (ret[[i1, j1]] + ret[[i1, j2]]
 				   - ret[[i2, j2]] - ret[[i2, j1]]
                                    === rows[[i1]] - mv),
-				  subs = {ret[[i1, j1]] -> ret[[i2, j2]],
-					  ret[[i2, j2]] -> ret[[i1, j1]],
-					  ret[[i1, j2]] -> ret[[i2, j1]],
-					  ret[[i2, j1]] -> ret[[i1, j2]]};
+				  subs = {ret[[i1, j1]] -> ret[[i2, j1]],
+					  ret[[i2, j1]] -> ret[[i1, j1]],
+					  ret[[i1, j2]] -> ret[[i2, j2]],
+					  ret[[i2, j2]] -> ret[[i1, j2]]};
 				  ret = ret /. subs;
 				  rows[[i1]] = Total[ret[[i1]]];
 				  rows[[i2]] = Total[ret[[i2]]];
@@ -1418,8 +1485,6 @@ rectifyDiagonals[ind_List] :=
 		       ];
 		   ];   
 	       ];
-
-	       (*NON TESTATA!!!!*)
 	       (*Terza rettificazione*)
 	       For[i1 = 1, i1 <= order, i1++,  (*Riga 1*)
 		   For[j1 = 1, j1 <= order, j1++, (*Colonna 1*)
@@ -1436,14 +1501,10 @@ rectifyDiagonals[ind_List] :=
 				     ret[[j1]] -> ret[[i1]]};
 			     ret = ret /. subs;
 			     {diag1, diag2} = diagonalsTotal[ret];
-			     If[incorrectDiagonals[ret] === 0,
-				Print["TERZA RETTIFICAZIONE!!!"];
-			     ];
 			  ];
 		       ];
 		   ];   
 	       ];
-
 	       (*NON TESTATA!!!!*)
 	       (*Quarta rettificazione*)
 	       For[i1 = 1, i1 <= order, i1++,  (*Riga 1*)
@@ -1463,7 +1524,7 @@ rectifyDiagonals[ind_List] :=
 			     temp = temp /. subs;
 			     ret = Transpose[temp];
 			     {diag1, diag2} = diagonalsTotal[ret];
-			     If[incorrectDiagonals[ret] === 0,
+			     If[incorrectDiagonals[{ret, ind[[2]]}] === 0,
 				Print["QUARTA RETTIFICAZIONE!!!"];
 			     ];
 			  ];
@@ -1486,7 +1547,7 @@ rectifyDiagonals[ind_List] :=
 				     ret[[order -i1 + 1]] -> ret[[i1]]};
 			     ret = ret /. subs;
 			     {diag1, diag2} = diagonalsTotal[ret];
-			     If[incorrectDiagonals[ret] === 0,
+			     If[incorrectDiagonals[{ret, ind[[2]]}] === 0,
 				Print["QUINTA RETTIFICAZIONE!!!"];
 			     ];
 			  ];
@@ -1497,9 +1558,49 @@ rectifyDiagonals[ind_List] :=
 	       Return[{ret, ind[[2]]}];
 	];
 
+(*Rettifica le linee di un individuo se questo ha fitness migliore di 50 order*)
+rectifyLinesInd[ind_List] :=
+	Module[{order, ret},
+	       order = Length[ind[[1]]];
+	       If[fitnessInd[ind] < 50 order &&
+		  incorrectRows[ind] + incorrectColumns[ind] =!= 0,
+		  ret = ind;
+		  ret = rectifyRowsWithOnePair[ret];
+		  ret = rectifyRowsWithTwoPairs[ret];
+		  ret = rectifyColumnsWithOnePair[ret];
+		  ret = rectifyColumnsWithTwoPairs[ret];
+		  Return[ret];
+	       ];
+	       Return[ind];
+	];
 
+(*Refficila le linee di una popolazione*)
+rectifyLinesPop[pop_List] :=
+	Module[{},
+	       Return[rectifyLinesInd /@ pop];
+	];
+
+(*Rettifica le diagonali di un individuo se questo ha fitness migliore di 100*)
+rectifyDiagonalsInd[ind_List] :=
+	Module[{order},
+	       order = Length[ind[[1]]];
+	       If[fitnessInd[ind] < 100 order &&
+		  incorrectRows[ind] + incorrectColumns[ind] === 0,
+		  Return[rectifyDiagonals[ind]];
+	       ];
+	       Return[ind];
+	];
+
+(*Refficila le linee di una popolazione*)
+rectifyDiagonalsPop[pop_List] :=
+	Module[{},
+	       Return[rectifyDiagonalsInd /@ pop];
+	];
+
+(*Esegue l'algoritmo Xie-Kang*)
 xiekang[order_Integer] :=
-	Module[{father, offspring, gen, fitbest, timings, fittest},
+	Module[{father, offspring, gen, fitbest, timings, fittest, fr, fc, fd,
+	       inclin, fit, fitbestindex},
 
 	       (*timings contiene gli intervalli temporali*)
 	       
@@ -1522,43 +1623,81 @@ xiekang[order_Integer] :=
 	       gen = 1;
 	       fitbest = fitnessInd[father];
 
+	       inclin = {};
+	       fit = {};
+
 	       Print["Il padre ha fitness ", fitbest];
 	       
-	       While[fitbest > 0,
+	       While[fitbest =!= 0,
+		     (*     Print[father];*)
 		     offspring = ParallelTable[father, {10}];
 		     Print["Siamo alla generazione ", gen];
 		     Print["Effettuo mutazioni"];
 		     timings[2] = TimeUsed[];
-		     offspring = mutateInd /@  offspring;
-		     Print["Mutazioni effettuate in ", TimeUsed[] - timings[2], " s"];
+		     offspring = ParallelMap[mutateInd, offspring];
+		     Print[fitnessPopInd[offspring]];
+ (*	     Print["Mutazioni effettuate in ", TimeUsed[] - timings[2], " s"];*)
 		     fittest = fittestChild[offspring];
 		     fitbest = fitnessInd[fittest];
 		     Print["Il miglior figlio ha fitness ", fitbest];
-		     If[fitbest < 50 order,
-			Print["Il miglior figlio e' promettente, lo rettifico"];
+		     fr = incorrectRows[fittest];
+		     fc = incorrectColumns[fittest];
+		     fd = incorrectDiagonals[fittest];
+		     Print["Righe sbagliate: ", fr];
+		     Print["Colonne sbagliate: ", fc];
+		     Print["Diagonali sbagliate: ", fd];
+		     Print["Linee sbagliate: ", fr + fc + fd];
+		     If[fitbest === 0,
+			Print["TROVATO!"];
+			Print["Ho costruito un quadrato magico in ",
+			      TimeUsed[] - timings[1], " s"];
+			Return[fittest[[1]]]
+		     ];
+		     If[fitbest < 50 order &&
+			incorrectRows[fittest] + incorrectColumns[fittest] =!= 0,
+			Print["Rettifico righe"];
+			(*			Print[fittest];*)
 			timings[3] = TimeUsed[];
-			fittest = rectifyRowsWithOnePair[fittest];
-			fittest = rectifyRowsWithTwoPairs[fittest];
-			fittest = rectifyColumnsWithOnePair[fittest];
-			fittest = rectifyColumnsWithTwoPairs[fittest];	
-			Print["Rettificazione effettuata in ", TimeUsed[] - timings[3],
-			      " s"];
+			offspring = rectifyLinesPop[offspring];
+   (*		Print["Rettificazione effettuata in ", TimeUsed[] - timings[3],
+			      " s"];*)
+			fittest = fittestChild[offspring];
 			fitbest = fitnessInd[fittest];
 			Print["Ora il miglior figlio ha fitness ", fitbest];
+			fr = incorrectRows[fittest];
+			fc = incorrectColumns[fittest];
+			fd = incorrectDiagonals[fittest];
+			Print["Righe sbagliate: ", fr];
+			Print["Colonne sbagliate: ", fc];
+			Print["Diagonali sbagliate: ", fd];
+			Print["Linee sbagliate: ", fr + fc + fd];
 		     ];
-		     If[fitbest < 100,
-			Print["Il miglior figlio e' estremamente buono, lo rettifico"];
+		     If[incorrectRows[fittest] + incorrectColumns[fittest] === 0 &&
+			fitbest < 100,
+			Print["Rettifico diagonali"];
+			(*	Print[fittest];*)
 			timings[4] = TimeUsed[];
-			fittest = rectifyDiagonals[fittest];
-			Print["Rettificazione effettuata in ", TimeUsed[] - timings[4],
-			      " s"];
+			offspring = rectifyDiagonalsPop[offspring];
+	(*		Print["Rettificazione effettuata in ", TimeUsed[] - timings[4],
+			      " s"];*)
+			fittest = fittestChild[offspring];
 			fitbest = fitnessInd[fittest];
 			Print["Ora il miglior figlio ha fitness ", fitbest];
+			fr = incorrectRows[fittest];
+			fc = incorrectColumns[fittest];
+			fd = incorrectDiagonals[fittest];
+			Print["Righe sbagliate: ", fr];
+			Print["Colonne sbagliate: ", fc];
+			Print["Diagonali sbagliate: ", fd];
+			Print["Linee sbagliate: ", fr + fc + fd];;
 		     ];
+		     inclin = Append[inclin, fr + fc + fd];
+		     fit = Append[fit, fitbest];
 		     If[incorrectRows[fittest] + incorrectColumns[fittest] =!= 0,
 			If[fitbest > 50 order,
-			   father = fittestChild[Append[offspring, father]],
-			   father = fittest;
+			   father = fittest,
+			   father = fittestChild[Append[offspring, father]];
+			   (*father = fittestChild[offspring];*)
 			],
 			(*Se le linee sono a posto*)
 			If[incorrectDiagonals[fittest] === 0,
@@ -1566,13 +1705,15 @@ xiekang[order_Integer] :=
 			   Print["TROVATO!"];
 			   Print["Ho costruito un quadrato magico in ",
 				 TimeUsed[] - timings[1], " s"];
-			   Return[fittest[[1]]],
+			   Return[{fittest[[1]], fit, inclin}],
 			   (*Se non sono a posto*)
 			   If[fitbest > 100,
 			      father = fittest,
+			      (*father = fittestChild[offspring],*)
 			      father = fittestChild[Append[offspring, father]];
 			   ];
-			]			
+			];
+					Print[father];
 		     ];
 		     gen += 1;
 	       ];
