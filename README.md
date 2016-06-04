@@ -11,3 +11,9 @@ There is a semideterministic algorithm for small N, which doesn't converges.
 The genetic approach does not converges.
 
 Now it's in development an evolutionary approach.
+
+MAGICMATHEMATICASQUARE NOW (almost) WORKS!!!
+
+It can build large squares (> 10x10) in a few minutes!
+
+Try for example xiekang[10]!
