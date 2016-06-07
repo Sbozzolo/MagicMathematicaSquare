@@ -19,11 +19,27 @@ entrambe le diagonali dia sempre lo stesso numero, il numero magico*)
    
 If[$VersionNumber < 8, Print["Questo programma richiede Mathematica 8"]];
 
+(*
+  ____                 _   _      
+ / ___| ___ _ __   ___| |_(_) ___ 
+| |  _ / _ \ '_ \ / _ \ __| |/ __|
+| |_| |  __/ | | |  __/ |_| | (__ 
+ \____|\___|_| |_|\___|\__|_|\___|
+                                  
+    _    _                  _ _   _               
+   / \  | | __ _  ___  _ __(_) |_| |__  _ __ ___  
+  / _ \ | |/ _` |/ _ \| '__| | __| '_ \| '_ ` _ \ 
+ / ___ \| | (_| | (_) | |  | | |_| | | | | | | | |
+/_/   \_\_|\__, |\___/|_|  |_|\__|_| |_|_| |_| |_|
+           |___/                                  
+
+ *)
 (*Messaggio di benvenuto*)
-Print["Benveuto in MagicMathematicaSquare"]
-Print["Ecco le funzioni che puoi utilizzare:"]
-Print["run[nInd_Integer, order_Integer, pc_, pm_, criterion->fintessProportionate, limit->1000, elitism->0, fitnessFunction -> totalSquared]"]
-Print["L'output prodotto e': {whoIsTheBest}, timeused, {fitmin, fitmax, fitmean}"];
+(*Print["Benveuto in MagicMathematicaSquare"]*)
+(*Print["Ecco le funzioni che puoi utilizzare:"]
+Print["run[nInd_Integer, order_Integer, pc_, pm_,
+criterion->fintessProportionate, limit->1000, elitism->0, fitnessFunction -> totalSquared]"]
+Print["L'output prodotto e': {whoIsTheBest}, timeused, {fitmin, fitmax, fitmean}"];*)
 		 
 (*Calcola il numero magico*)
 magicNumber[n_Integer] :=
@@ -160,7 +176,8 @@ fitness[ind_List, type_:totalSquared] :=
 		      Return[Count[{row}, 0, Infinity]],
 		   
 		      _, (*Evita che il criterio non sia definito*)
-		      Print["La funzione di fitness ", type, " non e' ancora stata implementata"];
+		      Print["La funzione di fitness ", type,
+			    " non e' ancora stata implementata"];
 		      Abort[];	
 		];   
 	];
@@ -324,7 +341,8 @@ chooseParents[pop_List, criterion_, type_:totalSquared] :=
 	Module[{r},
 	       Return[Table[
 		       r = Random[];
-		       Length[Select[divideInterval[pop, criterion, type], (# < r) &]] + 1,
+		       Length[Select[divideInterval[pop, criterion, type],
+				     (# < r) &]] + 1,
 		       {Length[pop]}
 		      ]
 	       ];
@@ -406,7 +424,8 @@ swapColumns[square1_List, square2_List, row1_Integer, row2_Integer] :=
 (*Restistuice una permutazione della riga*)
 permutateRow[square_List, n_Integer] :=
 	Module[{},
-	       Return[Part[Permutations[square[[n]]], Random[Integer, {1, Length[square]!}]]];
+	       Return[Part[Permutations[square[[n]]],
+			   Random[Integer, {1, Length[square]!}]]];
 	];
 
 (*Restituisce una permutazione della colonna*)
@@ -482,8 +501,10 @@ crossoverOne[parents_List, pc_, type_:totalSquared] :=
 				   where2 = Random[Integer, {1, c12}];
 				   ps1 = Position[goodrows1, 1][[where1, 1]];
 				   ps2 = Position[goodrows2, 1][[where2, 1]];
-				   j1 = swapRows[parents[[1]], parents[[2]], ps1, ps2][[1]];
-				   j2 = swapRows[parents[[1]], parents[[2]], ps1, ps2][[2]];
+				   j1 = swapRows[parents[[1]],
+						 parents[[2]], ps1, ps2][[1]];
+				   j2 = swapRows[parents[[1]],
+						 parents[[2]], ps1, ps2][[2]];
 				   j1 = deleteDouble[j1];
 				   j2 = deleteDouble[j2];
 				   Return[{j1, j2}];
@@ -493,8 +514,10 @@ crossoverOne[parents_List, pc_, type_:totalSquared] :=
 				   where2 = Random[Integer, {1, c22}];
 				   ps1 = Position[goodcols1, 1][[where1, 1]];
 				   ps2 = Position[goodcols2, 1][[where2, 1]];
-				   j1 = swapColumns[parents[[1]], parents[[2]], ps1, ps2][[1]];
-				   j2 = swapColumns[parents[[1]], parents[[2]], ps1, ps2][[2]];
+				   j1 = swapColumns[parents[[1]],
+						    parents[[2]], ps1, ps2][[1]];
+				   j2 = swapColumns[parents[[1]],
+						    parents[[2]], ps1, ps2][[2]];
 				   j1 = deleteDouble[j1];
 				   j2 = deleteDouble[j2];
  				   Return[{j1, j2}];
@@ -505,8 +528,10 @@ crossoverOne[parents_List, pc_, type_:totalSquared] :=
 				   where2 = Random[Integer, {1, c22}];
 				   ps1 = Position[goodcols1, 1][[where1, 1]];
 				   ps2 = Position[goodcols2, 1][[where2, 1]];
-				   j1 = swapColumns[parents[[1]], parents[[2]], ps1, ps2][[1]];
-				   j2 = swapColumns[parents[[1]], parents[[2]], ps1, ps2][[2]];
+				   j1 = swapColumns[parents[[1]],
+						    parents[[2]], ps1, ps2][[1]];
+				   j2 = swapColumns[parents[[1]],
+						    parents[[2]], ps1, ps2][[2]];
 				   j1 = deleteDouble[j1];
 				   j2 = deleteDouble[j2];
 				   Return[{j1, j2}];
@@ -516,8 +541,10 @@ crossoverOne[parents_List, pc_, type_:totalSquared] :=
 				   where2 = Random[Integer, {1, c12}];
 				   ps1 = Position[goodrows1, 1][[where1, 1]];
 				   ps2 = Position[goodrows2, 1][[where2, 1]];
-				   j1 = swapRows[parents[[1]], parents[[2]], ps1, ps2][[1]];
-				   j2 = swapRows[parents[[1]], parents[[2]], ps1, ps2][[2]];
+				   j1 = swapRows[parents[[1]],
+						 parents[[2]], ps1, ps2][[1]];
+				   j2 = swapRows[parents[[1]],
+						 parents[[2]], ps1, ps2][[2]];
 				   j1 = deleteDouble[j1];
 				   j2 = deleteDouble[j2];
 				   Return[{j1, j2}];
@@ -565,7 +592,8 @@ crossoverOne[parents_List, pc_, type_:totalSquared] :=
 		      ],		      
 
 		      _, (*Evita che il criterio non sia definito*)
-		      Print["La funzione di fitness ", type, " non e' ancora stata implementata"];
+		      Print["La funzione di fitness ", type,
+			    " non e' ancora stata implementata"];
 		      Abort[];
 	       ];
 
@@ -576,7 +604,8 @@ crossoverAll[pop_List, pIndex_List, pc_Real, type_:totalSquared] :=
 	Module[{N},
 	       N = Length[pop];
 	       Return[Flatten[Table[
-		       crossoverOne[{pop[[pIndex[[i]]]], pop[[pIndex[[N-i]]]]}, pc, type],
+		       crossoverOne[{pop[[pIndex[[i]]]],
+				     pop[[pIndex[[N-i]]]]}, pc, type],
 		       {i,1,N/2}
 			      ], 1	
 		      ]
@@ -588,11 +617,13 @@ crossoverAll[pop_List, pIndex_List, pc_Real, type_:totalSquared] :=
 crossoverParents[pop_List, pc_, criterion_, type_:totalSquared, elitism_:0] :=
 	Module[{bests, pop2, ret, popsorted},
                If[elitism === 0,
-		  Return[crossoverAll[pop, chooseParents[pop, criterion, type], pc, type]],
+		  Return[crossoverAll[pop, chooseParents[pop,
+							 criterion, type], pc, type]],
 		  popsorted = sortPop[pop, type];
 		  bests = popsorted[[1;;elitism]];
 		  pop2 = Drop[pop, elitism];
-		  ret = crossoverAll[pop2, chooseParents[pop2, criterion, type], pc, type];
+		  ret = crossoverAll[pop2, chooseParents[pop2,
+							 criterion, type], pc, type];
 		  ret = Join[ret, bests];
 		  Return[ret];			  
 		 ];			 
@@ -711,7 +742,8 @@ swapElementsFromCorrectRowsMulti[square_List, multi_Integer:1] :=
 	];
 
 (*Applica swapElementsFromCorrectRows ad una popolazione*)
-swapElementsFromCorrectRowsAll[pop_List, elitism_Integer:0, type_:correctLines, multi_Integer:1] :=
+swapElementsFromCorrectRowsAll[pop_List, elitism_Integer:0,
+			       type_:correctLines, multi_Integer:1] :=
 	Module[{popsorted, pop2, ret},
 	       popsorted = sortPop[pop, type];
 	       pop2 = Drop[popsorted, elitism];
@@ -749,18 +781,24 @@ fromRowsToMagic[nInd_Integer, order_Integer, OptionsPattern[]] :=
 		      target = 2 order + 2
 		     ];
 				 		   	       
-	       If[targetFitnessPop[popin, OptionValue[fitnessFunction]] === target, Return[count]];
+	       If[targetFitnessPop[popin, OptionValue[fitnessFunction]] === target,
+		  Return[count]];
 
-	       While[targetFitnessPop[popin, OptionValue[fitnessFunction]] =!= target && count < OptionValue[limit],
+	       While[targetFitnessPop[popin, OptionValue[fitnessFunction]] =!=
+				     target && count < OptionValue[limit],
 		     count += 1;
-		     popin = swapElementsFromCorrectRowsAll[popin, OptionValue[elitism],
-							    OptionValue[fitnessFunction], OptionValue[multi]];
+		     popin = swapElementsFromCorrectRowsAll[popin,
+			      OptionValue[elitism],
+			      OptionValue[fitnessFunction], OptionValue[multi]];
 		     popsorted = sortPop[popin, OptionValue[fitnessFunction]];
 		     newpop = ParallelTable[buildFromScratch[order], {nInd/2}];
 		     popin = Join[popsorted[[1;;nInd/2]], newpop];
-		     fitmin = Append[fitmin, minFitnessPop[popin, OptionValue[fitnessFunction]]];
-		     fitmax = Append[fitmax, maxFitnessPop[popin, OptionValue[fitnessFunction]]];
-		     fitmean = Append[fitmean, meanFitnessPop[popin, OptionValue[fitnessFunction]]];
+		     fitmin = Append[fitmin, minFitnessPop[popin,
+		                     OptionValue[fitnessFunction]]];
+		     fitmax = Append[fitmax, maxFitnessPop[popin,
+		                     OptionValue[fitnessFunction]]];
+		     fitmean = Append[fitmean, meanFitnessPop[popin,
+				     OptionValue[fitnessFunction]]];
 		     statGen[popin, count, OptionValue[fitnessFunction]];
 	       ];
 
@@ -768,7 +806,8 @@ fromRowsToMagic[nInd_Integer, order_Integer, OptionsPattern[]] :=
 	       
 	       Print["Generazione finale: ", count];
 	       Print["Tempo impiegato: ", deltat, " s"];
-	       Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]], deltat, {fitmin, fitmax, fitmean}}];
+	       Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]],
+		       deltat, {fitmin, fitmax, fitmean}}];
 	];
 
 (*Esegue piu' mutazioni*)
@@ -824,11 +863,13 @@ reproduce[pop_List, criterion_, pc_, pm_, type_:totalSquared, elitism_Integer:0,
 	       If[criterion === fittests,
 		  popsorted = sortPop[pop, type];
 		  mating = popsorted[[1;;nfittests]];
-		  mated = mutationAll[crossoverParents[mating, pc, criterion, type, elitism], pm, type, elitism];
+		  mated = mutationAll[crossoverParents[mating,
+			  pc, criterion, type, elitism], pm, type, elitism];
 		  new = generatePop[Length[pop] - nfittests, Length[pop[[1]]]];
 		  Return[purge[Join[new, mated]]];
 	       ];
-	       Return[purge[mutationAll[crossoverParents[pop, pc, criterion, type, elitism], pm, type, elitism, multi]]];
+	       Return[purge[mutationAll[crossoverParents[pop,
+			pc, criterion, type, elitism], pm, type, elitism, multi]]];
 	]; (*Restituisce una popolazione di nuovi individui*)
 	
 (*RICHIEDE MATHEMATICA 8*)	
@@ -883,18 +924,25 @@ run[nInd_Integer, order_Integer, pc_, pm_, OptionsPattern[]] :=
 		      target = order
 		     ];
 				 		   	       
-	       If[targetFitnessPop[popin, OptionValue[fitnessFunction]] === target, Return[count]];
+	       If[targetFitnessPop[popin, OptionValue[fitnessFunction]] === target,
+		  Return[count]];
 
-	       While[targetFitnessPop[popin, OptionValue[fitnessFunction]] =!= target && count < OptionValue[limit],
+	       While[targetFitnessPop[popin, OptionValue[fitnessFunction]] =!= target
+		     && count < OptionValue[limit],
 		     count += 1;
 		     popin = reproduce[popin, OptionValue[criterion], pc, pm,
-				       OptionValue[fitnessFunction], OptionValue[elitism],
+				       OptionValue[fitnessFunction],
+				       OptionValue[elitism],
 				       OptionValue[nfittests], OptionValue[crossover]];
-		     fitmin = Append[fitmin, minFitnessPop[popin, OptionValue[fitnessFunction]]];
-		     fitmax = Append[fitmax, maxFitnessPop[popin, OptionValue[fitnessFunction]]];
-		     fitmean = Append[fitmean, meanFitnessPop[popin, OptionValue[fitnessFunction]]];
+		     fitmin = Append[fitmin, minFitnessPop[popin,
+						OptionValue[fitnessFunction]]];
+		     fitmax = Append[fitmax, maxFitnessPop[popin,
+							OptionValue[fitnessFunction]]];
+		     fitmean = Append[fitmean, meanFitnessPop[popin,
+							OptionValue[fitnessFunction]]];
 		     If[distance,
-			dists = Append[dists, meanDistPop[popin, OptionValue[fitnessFunction]]];
+			dists = Append[dists, meanDistPop[popin,
+						        OptionValue[fitnessFunction]]];
 		     ];
 		     statGen[popin, count, OptionValue[fitnessFunction], distance];
 	       ];
@@ -904,8 +952,10 @@ run[nInd_Integer, order_Integer, pc_, pm_, OptionsPattern[]] :=
 	       Print["Generazione finale: ", count];
 	       Print["Tempo impiegato: ", deltat, " s"];
 	       If[distance,
-		  Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]], deltat, {fitmin, fitmax, fitmean, dists}}],
-		  Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]], deltat, {fitmin, fitmax, fitmean}}]
+		  Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]],
+			  deltat, {fitmin, fitmax, fitmean, dists}}],
+		  Return[{whoIsTheBest[popin, OptionValue[fitnessFunction]],
+			  deltat, {fitmin, fitmax, fitmean}}]
 	       ]
 	];
 
@@ -952,7 +1002,6 @@ buildFromScratch[order_Integer] :=
 			      goods = Drop[goods, {n}];
 			   ];
 		     ];
-		     (*TODO: FARE QUALCOSA ANCHE QUANDO NON FUNZIONA*)
 		     If[Length[goods] === 0,
 			Print["La costruzione non ha funzionato"];
 			Abort[];
@@ -986,14 +1035,72 @@ http://ieeexplore.ieee.org/xpl/abstractAuthors.jsp?arnumber=1299763 *)
 
 (*Da ora in poi l'elemento base e' un individuo, non un quadrato*)
 
+(*Versioni compilate per essere piu' veloci*)
+
+Print["Caricamento... Attendere prego"];
+
+Print["0 %"];
+
+(*Calcola il numero magico*)
+magicNumber = Compile[{{n, _Integer}},
+		      Module[{},
+			     Return[Quotient[n (n n +1), 2]]
+		      ], CompilationTarget->"C", Parallelization->True,
+		      RuntimeOptions->"Speed"
+	      ];
+
+Print["25 %"];
+
+(*Genera un numero che non e' nella lista data*)
+(*Extreme sono gli estremi da cui pescare il numero*)
+randomDiff = Compile[{{list, _Integer, 1}, {extreme, _Integer, 1}},
+		     Module[{r},
+			    r = Random[Integer, extreme];
+			    While[Count[list,r] =!= 0, r = Random[Integer, extreme]];
+			    Return[r]
+		     ], CompilationTarget->"C", Parallelization->True,
+		     RuntimeOptions->"Speed"
+	     ];
+
+Print["50 %"]
+
+(*Genera un quadrato con tutti i numeri diversi, da 1 a n^2*)
+generateSquare = Compile[{{n, _Integer}},
+			 Module[{used, ret},
+				used = Table[-1, {i,1,n}, {j,1,n}];
+				ret = Table[r = randomDiff[Flatten[used], {1, n^2}];
+					    used[[i,j]] = r;
+					    r,{i,1,n},{j,1,n}];
+				Return[ret]
+			 ], {{randomDiff[_], _Integer}},
+			 CompilationTarget->"C", Parallelization->True,
+			 RuntimeOptions->"Speed"
+		 ];
+
+Print["75 %"];
+
+(*Questo modulo genera e inizializa un individuo, cioe' una coppia matrice
+  del quadrato + matrice delle deviazioni*)
+(*La matrice delle deviazioni di default e' inizializzata con il valore order*)
+generateInd = Compile[{{order, _Integer}},
+		      Module[{},
+			     Return[{generateSquare[order],
+				     Table[order^2, {order}, {order}]}]
+		      ], {{generateSquare[_], _Integer, 2}},
+		      CompilationTarget->"C", Parallelization->True,
+		      CompilationOptions -> {"InlineExternalDefinitions" -> True},
+		      RuntimeOptions->"Speed"
+	      ];
+
+Print["100 %"];
+
 (*Questo modulo genera e inizializa un individuo, cioe' una coppia matrice
   del quadrato + matrice delle deviazioni*)
 (*La matrice delle deviazioni di default e' inizializzata con il valore 3*)
-(*TODO: La funzione che genera quadrati random deve essere ottimizzata!!!*)
-generateInd[order_Integer] :=
+(*generateInd[order_Integer] :=
 	Module[{},
 	     Return[{generateSquare[order], Table[order^2, {order}, {order}]}];
-	];
+	];*)
 
 (*Calcola somme delle righe di un individuo*)
 (*Total e' molto piu' efficiente di Plus @@ *)
@@ -1597,6 +1704,10 @@ fromValuesToList[values_, n_Integer] :=
 	       Return[ParallelTable[values[i], {i,1,n}]];
 	];
 
+
+Print["Per costruire un quadrato utilizza il comando xiekang[n_Integer]"]
+
+
 (*Esegue l'algoritmo Xie-Kang*)
 xiekang[order_Integer] :=
 	Module[{father, offspring, gen, fitbest, timings, fittest, fr, fc, fd,
@@ -1737,4 +1848,23 @@ xiekang[order_Integer] :=
 		     Print["Linee sbagliate: ", fr + fc + fd];
 		     gen += 1;
 	       ];
+	       Return[False];
+	];
+
+(*Produce un po' di quadrati e salva i risultati in data*)
+workout[n_Integer] :=
+	Module[{a, k, t0},
+	       t0 = TimeUsed[];
+	       For[k = 10, k <= n, k = k + 5,
+		   For[i = 1, i <= 10, i++,
+		       Print["Ordine ", k];
+		       Print["Tentativo ", i];
+		       a = xiekang[k];
+		       Save["data/ordine_" <>
+			     ToString[k] <>
+			     "_tentativo_" <> ToString[i], a];
+		   ];
+	       ];
+	       Print["FINE!!!!!!!!!!!!!!!!!!"];
+	       Print["Tempo impeigato: ", TimeUsed[] - to];
 	];
