@@ -1029,6 +1029,10 @@ __  ___            _  __
            |___/
  *)
 
+(*Funziona!*)
+(*Bug noti:
+  - Non sempre converge con quadrati di ordine dal 3 al 6*)
+
 (*Segue l'impelementazione dell'argoritmo di Xie Kang*)
 (*Maggiori informazioni disponibili al link:
 http://ieeexplore.ieee.org/xpl/abstractAuthors.jsp?arnumber=1299763 *)
@@ -1528,8 +1532,6 @@ rectifyRowsWithTwoPairs[ind_List] :=
 	       Return[{ret, ind[[2]]}];
 	];
 
-(*RISCRIVERLA NATIVA!!!!*)
-
 (*Scambia due coppie che sono in colonne diverse e in
   righe diverse se cio' porta alla somma magica*)
 rectifyColumnsWithTwoPairs[ind_List] :=
@@ -1660,14 +1662,23 @@ rectifyDiagonals[ind_List] :=
 
 (*Rettifica le linee di un individuo se questo ha fitness migliore di 50 order*)
 rectifyLinesInd[ind_List] :=
-	Module[{order, ret},
+	Module[{order, ret(*, timezero*)},
 	       order = Length[ind[[1]]];
 	       If[fitnessInd[ind] < 50 order &&
 		  incorrectRows[ind] + incorrectColumns[ind] =!= 0,
-		  ret = rectifyRowsWithOnePair[ind];
+		  (*  timezero = TimeUsed[];*)
+		  ret = rectifyRowsWithOnePair[ind]; 
+		 (* TimeUsed[] - timezero >>> "reclin.dat";
+		  timezero = TimeUsed[];*)
 		  ret = rectifyRowsWithTwoPairs[ret];
+		 (* TimeUsed[] - timezero >>> "reclin.dat";
+		  timezero = TimeUsed[];*)
 		  ret = rectifyColumnsWithOnePair[ret];
+		 (* TimeUsed[] - timezero >>> "reclin.dat";
+		  timezero = TimeUsed[];*)
 		  ret = rectifyColumnsWithTwoPairs[ret];
+		 (* TimeUsed[] - timezero >>> "reclin.dat";
+		  timezero = TimeUsed[];*)
 		  Return[ret];
 	       ];
 	       Return[ind];
@@ -1704,17 +1715,23 @@ fromValuesToList[values_, n_Integer] :=
 	       Return[ParallelTable[values[i], {i,1,n}]];
 	];
 
-
 Print["Per costruire un quadrato utilizza il comando xiekang[n_Integer]"]
-
 
 (*Esegue l'algoritmo Xie-Kang*)
 xiekang[order_Integer] :=
 	Module[{father, offspring, gen, fitbest, timings, fittest, fr, fc, fd,
-	       inclin, fit, fitbestindex},
+		inclin, fit, fitbestindex, times, timmut, timreclin, timrecdiag,
+		timsel},
 
-	       (*timings contiene gli intervalli temporali*)
-	       
+	       (*timings contiene i tempi*)
+	       (*times i delta tempi*)
+	       times = {0};
+	       (*1 = generazione di un individuo*)
+	       (*2 = mutazioni*)
+	       (*3 = rettifilcazioni linee*)
+	       (*4 = rettificazioni diagonali*)
+	       (*5 = selezioni*)
+	       	       
 	       Print["Costruisco un quadrato di ordine: ", order];
 	       
 	       Print["Genero il capostipide di tutti i quadrati"];
@@ -1722,6 +1739,8 @@ xiekang[order_Integer] :=
 	       father = generateInd[order];
 	       timings[1] = TimeUsed[];
 	       (*Print["Quadrato generato in ", timings[1] - timings[0], " s"];*)
+	       
+	       times[[1]] = timings[1] - timings[0];
 
 	       If[fitnessInd[father] === 0,
 		  Print["Ho costruito un quadrato magico in ",
@@ -1729,22 +1748,25 @@ xiekang[order_Integer] :=
 		  Return[father[[1]]];
 	       ];
 
-	       (*Inizializzo una figliata di 10 elementi uguali al padre*)
+	       (*Inizializzo una figliata di 25 elementi uguali al padre*)
 	       gen = 1;
 	       fitbest = fitnessInd[father];
 
 	       Print["Il padre ha fitness ", fitbest];
 	       
 	       While[fitbest =!= 0,
-		     (*     Print[father];*)
+		     (*Print[father];*)
 		     offspring = ParallelTable[father, {25}];
 		     Print["Siamo alla generazione: ", gen];
 		     Print["Effettuo mutazioni"];
 		     timings[2] = TimeUsed[];
 		     offspring = ParallelMap[mutateInd, offspring];
-		     (*	     Print[fitnessPopInd[offspring]];*)
- (*	     Print["Mutazioni effettuate in ", TimeUsed[] - timings[2], " s"];*)
+		     (*Print[fitnessPopInd[offspring]];*)
+		  (*Print["Mutazioni effettuate in ", TimeUsed[] - timings[2], " s"];*)
+		     timmut[gen] = TimeUsed[] - timings[2];
+		     timings[5] = TimeUsed[];
 		     fittest = fittestChild[Append[offspring, father]];
+		     timsel[gen] = TimeUsed[] - timings[5];
 		     fitbest = fitnessInd[fittest];
 (*		     Print["Il miglior figlio ha fitness ", fitbest];
 		     fr = incorrectRows[fittest];
@@ -1754,6 +1776,8 @@ xiekang[order_Integer] :=
 		     Print["Colonne sbagliate: ", fc];
 		     Print["Diagonali sbagliate: ", fd];
 		     Print["Linee sbagliate: ", fr + fc + fd];*)
+		     timreclin[gen] = -9999;
+		     timrecdiag[gen] = -9999;		     
 		     If[fitbest === 0,
 			Print["TROVATO!"];
 			Print["Ho costruito un quadrato magico in ",
@@ -1763,11 +1787,12 @@ xiekang[order_Integer] :=
 		     If[fitbest < 50 order &&
 			incorrectLines[fittest] =!= 0,
 			Print["Rettifico righe"];
-			(*			Print[fittest];*)
+			(*Print[fittest];*)
 			timings[3] = TimeUsed[];
 			offspring = rectifyLinesPop[offspring];
    (*		Print["Rettificazione effettuata in ", TimeUsed[] - timings[3],
 			      " s"];*)
+			timreclin[gen] = TimeUsed[] - timings[3];
 			fittest = fittestChild[Append[offspring, father]];
 			fitbest = fitnessInd[fittest];
 			(*Print["Ora il miglior figlio ha fitness ", fitbest];
@@ -1785,6 +1810,7 @@ xiekang[order_Integer] :=
 			(*Print[fittest];*)
 			timings[4] = TimeUsed[];
 			offspring = rectifyDiagonalsPop[offspring];
+			timrecdiag[gen] = TimeUsed[] - timings[4];
 		(*Print["Rettificazione effettuata in ", TimeUsed[] - timings[4],
 			      " s"];*)
 			fittest = fittestChild[Append[offspring, father]];
@@ -1801,7 +1827,6 @@ xiekang[order_Integer] :=
 		     If[incorrectLines[fittest] =!= 0,
 			If[fitbest > 50 order,
 			   father = fittestChild[offspring],
-			   Print["Prendo anche il padre"];
 			   father = fittestChild[Append[offspring, father]];
 			   (*father = fittestChild[offspring];*)
 			],
@@ -1821,9 +1846,14 @@ xiekang[order_Integer] :=
 			   Print["TROVATO!"];
 			   Print["Ho costruito un quadrato magico in ",
 				 TimeUsed[] - timings[1], " s"];
+			   (*times = {times[[1]],
+				    fromValuesToList[timmut, gen],
+				    fromValuesToList[timreclin, gen],
+				    fromValuesToList[timrecdiag, gen],
+				    fromValuesToList[timsel, gen]};*)
 			   Return[{TimeUsed[] - timings[1], fittest[[1]],
 				   fromValuesToList[fit, gen],
-				   fromValuesToList[inclin, gen]}],
+				   fromValuesToList[inclin, gen](*, times*)}],
 			   (*Se non sono a posto*)
 			   If[Abs[fitbest] > 100,
 			      father = fittestChild[offspring],
@@ -1851,7 +1881,7 @@ xiekang[order_Integer] :=
 	       Return[False];
 	];
 
-(*Produce un po' di quadrati e salva i risultati in data*)
+(*Produce un po' di quadrati e salva i risultati in data, per confrontare con XieKang*)
 workout[n_Integer] :=
 	Module[{a, k, t0},
 	       t0 = TimeUsed[];
