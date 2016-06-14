@@ -21,7 +21,6 @@
 
 \documentclass[italian,twoside,twocolumn]{article}
 
-
 \usepackage{blindtext} % Package to generate dummy text throughout this template 
 
 \usepackage[utf8]{inputenc}
@@ -46,6 +45,7 @@
 \renewcommand{\abstractnamefont}{\normalfont\bfseries} % Set the "Abstract" text to bold
 \renewcommand{\abstracttextfont}{\normalfont\small\itshape} % Set the abstract itself to small italic text
 
+
 \usepackage{titlesec} % Allows customization of titles
 \renewcommand\thesection{\Roman{section}} % Roman numerals for the sections
 \renewcommand\thesubsection{\roman{subsection}} % roman numerals for subsections
@@ -66,8 +66,9 @@
 \usepackage{amsmath}
 
 \usepackage{subfig}
-
 \usepackage{siunitx}
+\usepackage{pgfplots}
+\usepgfplotslibrary{units}
 
 %Flowchart
 \usepackage{makeshape}
@@ -95,7 +96,7 @@
 \date{Luglio 2016} % Leave empty to omit a date
 \renewcommand{\maketitlehookd}{%
 \begin{abstract}
-\noindent In questo lavoro vengono presentati due algoritmi stocastici per costruire quadrati magici normali, ovvero matrici di numeri naturali tutti differenti in cui la somma dei valori su ogni riga, su ogni colonna e sulle diagonali è sempre la stessa. La prima implementazione è un algoritmo genetico realizzato utilizzando diverse funzioni di fitness e metodi di selezione, mentre il secondo è un algoritmo evolutivo, basato sul lavoro di Xie e Kang \cite{XieKang:2003}. Nessuna delle implementazioni dell'algoritmo genetico realizzate in questo lavoro ha portato alla costruzione di quadrati magici, a causa dell'impossibilità di formulare in modo adatto il problema. L'algoritmo evolutivo invece si è mostrato efficacie nella costruzione di quadrati magici. Si sono quindi confrontati i risultati ottenuti con quelli originali di Xie e Kang, trovando un parziale accordo.
+\noindent In questo lavoro vengono presentati due algoritmi stocastici per costruire quadrati magici normali, ovvero matrici di numeri naturali tutti differenti in cui la somma dei valori su ogni riga, su ogni colonna e sulle diagonali è sempre la stessa. La prima implementazione è un algoritmo genetico realizzato utilizzando diverse funzioni di fitness e metodi di selezione, mentre il secondo è un algoritmo evolutivo, basato sul lavoro di Xie e Kang \cite{XieKang:2003}. Nessuna delle implementazioni dell'algoritmo genetico realizzate in questo lavoro ha portato alla costruzione di quadrati magici, a causa dell'impossibilità di formulare in modo adatto il problema. L'algoritmo evolutivo invece si è mostrato efficacie nella costruzione di quadrati magici. Si sono quindi confrontati i risultati ottenuti con quelli originali di Xie e Kang, trovando un disaccordo in merito a come scalano i tempi di esecuzione all'aumentare dell'ordine del quadrato, probabilmente dovuto ai limiti dell'implementazione in Mathematica.
 \end{abstract}
 }
 
@@ -112,59 +113,63 @@
 
 \section{Introduzione}
 
-\lettrine[nindent=0em,lines=3]{U}n quadrato magico di ordine $ N $ è una matrice quadrata  $ M $  di dimensioni $ N\times N $ contenente numeri naturali distinti tale che la somma dei valori su ciascuna riga, colonna e diagonale sia sempre la stessa, detta \emph{numero magico}. Qualora i numeri che compaiono sono i primi $ N^2 $ allora si il quadrato è detto \emph{normale}, e la somma che devono avere i termini sulla stessa linea è detta \emph{numero o costante magica}, e può essere calcolata. 
-
-Si trova che la costante magica di un quadrato magico di ordine $ N $ è:
+\lettrine[nindent=0em,lines=3]{U}n quadrato magico di ordine $ N $ è una matrice quadrata  $ M $  di dimensioni $ N\times N $ contenente numeri naturali distinti disposti in modo tale che la somma dei valori su ciascuna riga, colonna e diagonale sia sempre la stessa, detta \emph{numero magico}. Qualora i numeri che compaiono sono i primi $ N^2 $ allora il quadrato è detto \emph{normale}, e la somma che devono avere i termini sulla stessa linea è detta \emph{numero o costante magica}. Esiste una relazione algebrica che lega l'ordine di un quadrato magico normale con la costante magica: si trova che la costante magica di un quadrato magico di ordine $ N $ è:
 \[	 \mathit{m} = \frac{1}{2} N (N^2 + 1)	\]
+La dimostrazione di questa elementare proprietà è riportata in appendice.
 
-Chinese literature dating from as early as 2800 B.C., when a Magic Square known as the "Loh-Shu", or "scroll of the river Loh" (see above), was invented by Fuh-Hi, the mythical founder of Chinese civilisation
-Greek writings dating from about 1300 B.C.
-the works of Theon of Smyrna in 130 A.D.
-use by Arabian astrologers in the ninth century when drawing up horoscopes
-Arabic literature, written by Abraham ben Ezra, dating from the eleventh century
-India, dating from the eleventh or twelfth century, where the earliest fourth order magic square was found, in Khajuraho
-the writings of the Greek mathematician, Emanuel Moschopulus, whose works now reside in the National Library in Paris
-more recently, magic squares appeared in Chinese literature during the latter part of the posterior Chou dynasty (951 - 1126 A.D.) or the beginning of the Southern Sung dynasty (1127 - 1333 A.D.)
-the works of Cornelius Agrippa, a German physician and theologian from the sixteenth century, who constructed seven magic squares, of orders three to nine inclusive, which he associated with the seven planets then known (including both the Sun and the Moon)
-art, with the relatively well-known magic square which can be found in Albert Drer's engraving " Melencolia", where the date of its creation, 1514 AD, may be seen in the centre two cells of the bottom row
-a detailed French work, published in 1838 A.D.
+I quadrati magici hanno una storia molto lunga, iniziata probabilmente in Cina nel settimo secolo prima di Cristo, quando ai quadrati magici erano attribuite proprietà mistiche e rituali. Dalla Cina passarono in India e successivamente in Europa, dove furono continuamente considerati come oggetti dotati di poteri magici, il che spiega il loro utilizzo in discipline come l'alchimia o l'astrologia. Il primo studio matematicamente ponderato dei quadrati magici fu condotto da Simon De la Loubère alla fine del Seicento, che fornì anche un metodo di costruzione per alcuni tipi di quadrati. Da quel momento numerosi matematici si dedicarono allo studio delle proprietà dei quadrati magici, tra cui Euler e Lagrance e Lucas, anche se rimangono aperti molti interrogativi \cite{Abe:1994}. Ad oggi sono in palio $ \SI{8000}{\$} $ e bottiglie di champagne a chi risolve alcuni di questi enigmi. 
+
+I quadrati magici hanno anche applicazioni tecnologiche, tra cui nella crittografia \cite{TombaShiniraj:2014}, nella steganografia \cite{SahaBha:2015} (la tecnica di occultare informazioni nelle immagini), ma anche in teoria dei grafi o dei giochi, e in molti altri campi, anche in fisica.
+
+Costruire quadrati magici non è un compito semplice, in quanto il loro numero è molto piccolo rispetto a tutte le possibilità e le equazioni che definiscono la magicità di un quadrato non sono abbastanza stringenti per utilizzare approcci di forza bruta. Ad oggi non esiste ancora una formula che permetta di calcolare il numero di quadrati magici di ordine $ N $, le attuali stime sono ottenute utilizzando metodi Monte Carlo e approcci con tecniche di meccanica statistica. Alcune stime che rendono l'idea del numero di quadrati magici sono riportate in tabella \ref{tab:numero_quadrati_magici}.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Stime del numero di quadrati magici distinti $ N_{ms} $ al variare dell'ordine $ N $ dei quadrati magici normali. $ N_{ns} $ è il numero di possibili quadrati magici normali distinti costruibili all'ordine $ N $. In questo caso con due quadrati sono ritenuti distinti se non è possibile trasformare l'uno nell'altro utilizzando riflessioni. I presenti valori sono dovuti a Trump \cite{Trump} e sono ottenuti con metodi di Monte Carlo Backtracking e con errori intorno a $ \SI{1}{\percent} $. %I valori noti sono quelli della sequenza OEIS A006052.
+		}
+	\begin{tabular}{cccc}
+		$ N $ &       $ N_{ms} $        &       $ N_{ns} $        &  $ \si{\percent} $   \\ \hline
+		2   &            0            &    $ \sim  10^{1} $     &          0           \\
+		3   &            1            &     $ \sim 10^{5} $     &   $ \sim 10^{-5} $   \\
+		4   &           880           &    $ \sim 10^{12} $     &   $ \sim 10^{-7} $   \\
+		5   &       275 305 224       &    $ \sim 10^{24} $     &  $ \sim 10^{-18} $   \\
+		6   &    $ \sim 10^{19} $     &    $ \sim 10^{41} $     &  $ \sim 10^{-22} $   \\
+		20   &    $ \sim 10^{744} $    &    $ \sim 10^{868} $    &  $ \sim 10^{-124} $  \\
+		35   &   $ \sim 10^{2992} $    &   $ \sim 10^{3252} $    &  $ \sim 10^{-250} $  \\
+		50   &   $ \sim 10^{7000} $    &   $ \sim 10^{7410} $    &  $ \sim 10^{-410} $\\ \hline
+		%	10000 & $ \sim 10^{756373366} $ & $ \sim 10^{756570555} $ & $ \sim 10^{-197189} $ \\ 
+	\end{tabular} 
+	\label{tab:numero_quadrati_magici}
+\end{table}
 
 
-Gli algoritmi sono quindi implementati in Mathematica 8. Si è utilizzata questa versione perché permette di parallelizzare alcune funzioni in modo estremamente semplice, come ad esempio con il comando \texttt{Paralellize[]}.
 
+\subsection{Approcci deterministici}
+Nonostante il piccolo numero di quadrati magici alcuni metodi di costruzione sono disponibili già da molti anni, i più semplici dei quali sono già stati elencati da Kraitchik \cite{Krai:1942} nel 1942.
 
-In questo lavoro si utilizzerà il termine \emph{linea} indicando in modo generico una riga o una colonna. 
+Per quadrati dispari è disponibile il metodo Siamese\footnote{Simon de la Loubère è stato ambasciatore francese in Siam, luogo dove ha appreso il metodo che porta il suo nome.} (anche noto come metodo di de la Loumbre), il metodo "a losanghe" di Conway e il metodo Pheru.
+Per i quadrati di ordine pari esiste il metodo Medjig, mentre per quelli singolarmente pari, cioè di ordine $ 4n + 2 $ sono noti il metodo LUX di John Conway e il metodo Strachey.
+
+Questi metodi sono delle costruzioni passo a passo del quadrato: si inizia posizionando uno o più numeri, e con passaggi ricorsivi (detti movimenti) si utilizzano i valori già posizionati nel quadrato per posizionarne uno successivo. Oppure alcuni di questi metodi sono di completamento, cioè parono da una soluzione di ordine $ N $ per giungere ad una di $ N + 1 $, come il metodo Strachey.
+
+\subsection{Approcci stocastici}
+Gli algoritmi elencati nella sezione precedente sono stati implementati in programmi di computer e risultano sufficientemente efficienti per la costruzione di quadrati magici. 
+
+Tuttavia, tutti questi programmi hanno una limitazione: generano sempre il medesimo quadrato fissato l'ordine. Per questo motivo tali algoritmi risultano poco generalizzabili e quindi inadatti per studiare quadrati che oltre ad essere magici godono di ulteriori proprietà (ad esempio i quadrati bimagici, oppure i quadrati magici vincolati). Per questo motivo è conveniente provare ad implementare algoritmi in cui ci siano fattori di casualità che permettono di costruire sempre nuovi quadrati magici. In letteratura si trovano già alcuni risultati sulla costruzione di quadrati magici con questo tipo di metodologie, e i più efficienti algoritmi stocastici attualmente noti sono basate su tecniche note come \emph{metodi iper-euristici} che permettono di realizzare un quadrato magico vincolato di dimensioni $ 2600\times 2600 $ in meno di un minuto \cite{AhmedEnder:2014}. Questi algoritmi sono generalmente tuttavia complessi e articolati, mentre in questo lavoro sono esposte due soluzioni meno sofisticate: algoritmi genetici ed evolutivi. 
+
+Tali algoritmi sono stati implementati in Mathematica 8 cercando principalmente di ottenere delle soluzioni convergenti, e quindi di caratterizzare queste ultime in termini delle leggi di scala in funzione dell'ordine del quadrato. Si è utilizzata la versione 8 di Mathematica principalmente perché permette di parallelizzare alcune funzioni in modo estremamente semplice, come ad esempio con il comando \texttt{ParallelTable[]} o il comando \texttt{ParallelMap[]}, che sono i corrispettivi parallelizzati di \texttt{Table[]} e \texttt{Map[]}, girando su quattro core questo ha permesso di ridurre di circa il $ \SI{75}{\percent} $ i tempi di esecuzione rispetto ad un implementazione puramente sequenziale. Questi dettagli saranno discussi successivamente.
+
+\subsection{Terminologia}
+
+In questo lavoro si utilizzerà il termine \emph{linea} indicando in modo generico una riga o una colonna, laddove i termini riga e colonna designano i medesimi concetti generalmente utilizzati in algebra matriciale. 
 
 Una linea si dice \emph{magica} se la somma dei numeri che la compongono è il numero magico.
 
-Trovare quadrati magici è un compito difficile in quanto il loro numero è molto piccolo rispetto a tutte le possibilità (non esiste ancora una formula che permetta di calcolare il numero di quadrati magici di ordine $ N $, le attuali stime sono ottenute utilizzando metodi Monte Carlo e approcci con tecniche di meccanica statistica).
-
-\begin{table}
-	\caption{Numero di quadrati magici. Dati di \cite{Trump}. }
-\begin{tabular}{cccc}
-	$ N $ &       $ N_{ms} $        &       $ N_{ns} $        &  $ \si{\percent} $   \\ \hline
-	  2   &            0            &    $ \sim  10^{1} $     &          0           \\
-	  3   &            1            &     $ \sim 10^{5} $     &   $ \sim 10^{-5} $   \\
-	  4   &           880           &    $ \sim 10^{12} $     &   $ \sim 10^{-7} $   \\
-	  5   &       275 305 224       &    $ \sim 10^{24} $     &  $ \sim 10^{-18} $   \\
-	  6   &    $ \sim 10^{19} $     &    $ \sim 10^{41} $     &  $ \sim 10^{-22} $   \\
-	 20   &    $ \sim 10^{744} $    &    $ \sim 10^{868} $    &  $ \sim 10^{-124} $  \\
-	 35   &   $ \sim 10^{2992} $    &   $ \sim 10^{3252} $    &  $ \sim 10^{-250} $  \\
-	 50   &   $ \sim 10^{7000} $    &   $ \sim 10^{7410} $    &  $ \sim 10^{-410} $\\ \hline
-%	10000 & $ \sim 10^{756373366} $ & $ \sim 10^{756570555} $ & $ \sim 10^{-197189} $ \\ 
-\end{tabular} 
-\end{table}
-I quadrati magici hanno anche applicazioni tecnologiche, tra cui nella crittografia \cite{TombaShiniraj:2014}, nella steganografia \cite{SahaBha:2015} (la tecnica di occultare informazioni nelle immagini), ma anche in teoria dei grafi o dei giochi, e in molti altri campi, anche in fisica  
-
-\subsection{Approcci deterministici}
-Metodi per costruire quadrati magici sono disponibili già da molti anni. 
-
-Alcuni semplici metodi generali di costruzione sono quelli elencati da Kraitchik \cite{Krai:1942}
-
-\subsection{Approcci stocastici}
-Nonostante gli algoritmi elencati nella sezione precedente siano computazionalmente molto efficienti nella costruzione di quadrati magici, questi hanno una limitazione: fissato l'ordine generano sempre il medesimo quadrato. In questo modo questi algoritmi risultano poco generalizzabili e quindi inadatti per studiare quadrati che oltre ad essere magici godono di ulteriori proprietà (ad esempio i quadrati bimagici, oppure i quadrati magici vincolati). 
-
 \section{Algoritmi genetici}
+Un algoritmo genetico è un algoritmo di ottimizzazione che ricalca ciò che succede in biologia: una popolazione di individui si riproduce e subisce mutazioni, e gli individui migliori hanno maggiori chance di riprodursi. Un individuo è quindi una successione finita di numeri che codificano una o più proprietà, questi numeri possono essere alterati da.
+
+
+
 Il problema della costruzione di quadrati magici ha alcune delle caratteristiche adatte per essere affrontato con un algoritmo genetico:
 \begin{itemize}
 	\item Lo spazio delle soluzioni è estremamente vasto, consistendo nelle permutazioni di $ N^2 $ elementi, sottoposte a $ 2 N - 1 $ vincoli (uno per ogni riga, per ogni colonna e per le due diagonali). Lo spazio delle soluzioni ha quindi $ (N^2 - 2N - 1)! $ elementi (a titolo di esempio per $ N = 9 $ il numero di soluzioni possibili è più grande del numero di atomi presenti nell'universo osservabile). 
@@ -172,35 +177,31 @@ Il problema della costruzione di quadrati magici ha alcune delle caratteristiche
 	\item I quadrati magici possono essere codificati in modo diretto in individui dell'algoritmo genetico.
 	\item Il problema può essere formulato come un problema di ottimizzazione di una funzione di fitness.
 \end{itemize}
+Sono stati implementati diversi algoritmi genetici, i quali differiscono tra loro principalmente per la scelta della funzione di fitness e del metodo di selezione. 
 
 \subsection{Funzioni di fitness}
 Le funzioni di fitness che sono state implementate sono: 
 \begin{itemize}
-	\item \texttt{totalSquared}:
-	\begin{align*} f(M) =  \{\text{\small Somma dei quadrati delle deviazioni} \\ \text{\small di ogni linea dal numero magico} \}
-	\end{align*}
-	\item \texttt{totalAbs}:
-	\begin{align*} f(M) =  \{\text{\small Valore assoluto delle differenze} \\ \text{\small di ogni linea dal numero magico} \}
-	\end{align*}	
-	\item \texttt{correctLines}:
-	\begin{align*} f(M) =  \{\text{\small Numero di linee magiche} \}
-	\end{align*}	
+	\item \texttt{totalSquared}: La fitness di un individuo è data dalla somma dei quadrati delle differenze di ogni linea dal numero magico.
+	\item \texttt{totalAbs}: La fitness di un individuo è data dalla somma dei valori assoluti delle differenze di ogni linea dal numero magico.
+	\item \texttt{correctLines}: La fitness di un individuo è data dall numero di linee magiche. 
 \end{itemize}
 Ciascuna di queste funzioni di fitness ha una precisa espressione matematica in termini delle entrate della matrice e gode della proprietà che tutti quadrati magici di un certo hanno una fitness fitness definita (zero nei primi due casi e $ 2N + 2 $ nel terzo). 
 
 \subsection{Metodi di selezione e crossover}
-Metodi di selezione:
+Ad ogni individuo è attribuita un valore di fitness, bisogna quindi farli riprodurli. Sono stati implementati diverti meccanismi per selezionare i genitori in modo da premiare contemporaneamente la bontà, ma anche per permettere sufficiente variabilità. Questi sono:
 \begin{itemize}
-	\item fitnessProportionate
-	\item similarSquare
-	\item fittests
-	\item elitism
+	\item \texttt{fitnessProportionate}: Ciascun individuo ha una probabilità di essere selezionato per fare crossover proporzionale alla sua fitness, o all'inverso della fitness per quelle funzioni per cui gli individui migliori sono quelli con fitness minore.  
+	\item \texttt{similarSquare}: Ciascun individuo ha una probabilità di essere selezionato per fare crossover proporzionale ad un fattore che dipende dalla fitness è dalla sua distanza dall'individuo migliore. In questo contesto per distanza si intende il numero di permutazioni necessarie a trasformare un quadrato in un altro. In qualche modo questo metodo è una implementazione di un sigma scaling \cite{Mitchell:1998}.
+	\item \texttt{fittests}: I migliori \texttt{nFittests} individui si riproducono con eguale probabilità, dopodiché la popolazione è ripristinata alla dimensione iniziale aggiungendo il giusto numero di individui casualmente generati. 
+	\item \texttt{elitism}: Un certo numero di individui è selezionato per passare direttamente alla generazione successiva, i rimanenti si riproducono con uno dei metodi precedenti.
 \end{itemize}
-Metodi di crossover:
+Una volta che si è prodotta la lista dei genitori si fanno accoppiare scambiandosi geni con il crossover con una certa probabilità di crossover $ p_C $. Sono stati implementati due tipi di crossover:
 \begin{itemize}
 	\item Ad un punto verticale od orizzontale
 	\item Ad due punti verticale od orizzontale
 \end{itemize}
+Il crossover produce due figli che formati da parte di entrambi i genitori.
 
 Crossover verticale e orizzontale sono equivalenti a meno di una trasposizione.
 
@@ -234,77 +235,86 @@ Crossover verticale e orizzontale sono equivalenti a meno di una trasposizione.
 		\node at (1.5, 1.5) {X};
 		\end{tikzpicture}
 	}
-	\caption{Crossover ad un punto}
+	\caption{Crossover ad un punto. Assumendo che sia estratto il punto X come punto di taglio per il crossover, in un caso si considera come elementi precedenti quelli che sono}
 \end{figure}
+
+Siccome si vogliono costruire quadrati magici normali è necessario che tutti i numeri siano distinti, per questo motivo i crossover possono produrre degli individui non validi. Qualora questo succeda i quadrati vengono aggiustati eliminando i numeri doppi e sostituendoli con valori accettabili estratti casualmente.
 
 
 \subsection{Implementazione in Mathematica}
 
 
-\subsection{Conclusioni}
+Per lanciare il programma si utilizza il comando \texttt{run[]}. Per gestire le varie possibili configurazioni con cui si desidera lanciare l'algoritmo genetico il comando supporta delle opzioni.
+
+
+
 
 \section{Algoritmo evolutivo}
-Per superare i problemi legati all'applicazione di un algoritmo genetico per la costruzione di quadrati magici normali si adottano due accorgimenti:
+Gli algoritmi genetici si sono inadatti a risolvere il problema della costruzione dei quadrati magici, come verrà approfondito successivamente. Per superarne i problemi si è mostrato conveniente
 \begin{enumerate}
-	\item Si elimina la fase di crossover e si aumenta il numero di mutazioni effettuate sul singolo individuo.
-	\item Si effettuano controlli sistematici quando l'algoritmo comincia ad essere in condizioni di stallo. 
+	\item Eliminare la fase di crossover e si aumenta il numero di mutazioni effettuate sul singolo individuo.
+	\item Effettuare controlli sistematici quando l'algoritmo comincia ad essere in condizioni di stallo. 
 \end{enumerate}
-Siccome ora non vi sono più crossover non è necessario lavorare con una popolazione composta da numero elevato di individui, ma se ne utilizza uno solo, il quale produce un numero fissato di figli. 
-
-In questo lavoro è stata implementato un'algoritmo basato su quello proposto da  Xie e Kang in \cite{XieKang:2003}.
+Un'algoritmo stocastico che tiene conto di queste caratteristiche è quello di Xie e Kang \cite{XieKang:2003}. L'algoritmo evolutivo implementato in questo lavoro è basato sulla proposta di Xie e Kang.
 
 \subsection{Algoritmo di Xie-Kang}
 
 Tale algoritmo implementa i due miglioramenti esposti all'inizio di questa sezione e aggiunge un ulteriore contributo fondamentale: \emph{la congettura della costruzione a due fasi}.
 
 \subsubsection{Congettura della costruzione a due fasi}
-Una matrice composta da numeri naturali differenti $ N\times N $ è detta \emph{quadrato semimagico} se è un quadrato magico a meno delle diagonali, ovvero se la somma ddei valori su tutte le righe e su tutte le colonne è uguale al numero magico. Un quadrato semimagico è normale se le sue entrate sono tutti i numeri da $ 1 $ a $ N^2 $. 
+Una matrice composta da numeri naturali differenti $ N\times N $ è detta \emph{quadrato semimagico} se è un quadrato magico a meno delle diagonali, ovvero se la somma dei valori su tutte le righe e su tutte le colonne è uguale al numero magico. Un quadrato semimagico è normale se le sue entrate sono tutti i numeri da $ 1 $ a $ N^2 $. 
 
 La congettura della costruzione a due fasi di Xie e Kang afferma che un quadrato semimagico è sempre completabile ad un quadrato magico utilizzando un numero finito di permutazioni di righe e di colonne oppure di rettificazioni locali. 
 
-\subsection{Metodi di selezione}
-Vengono utilizzati due metodi di selezione (\emph{evolution strategies}) differenti per incentivare o meno la variabilità degli individui. 
-\begin{itemize}
-	\item$ (\mu, \lambda)-ES $: La nuova generazione di genitori è formata dai migliori figli della precedente.
-	\item $ (\mu + \lambda)-ES $: La nuova generazione è formata dagli individui migliori tra i genitori e i figli della generazione precedente.
-\end{itemize}
-In queste diciture $ \mu $ indica i genitori della generazione precedente, mentre $ \lambda $ i figli. 
-L'utilizzo della seconda strategia evolutiva garantisce che non vengono persi individui buoni ma modificati dalle mutazioni, mentre l'utilizzo del primo permette di esplorare più velocemente lo spazio delle soluzioni. 
+Non è disponibile una dimostrazione per questa affermazione, che è per questo motivo definita una \emph{congettura}.
 
-In questo algoritmo sono stati utilizzate entrambe le strategie evolutive a seconda di quale sia più utile nel momento della selezione. Inoltre siccome non vi è un reale vantaggio nell'avere un numero elevato di genitori se ne seleziona sempre uno solo, il quale produce 25 figli. 
+\subsubsection{Codifica degli individui}
+A differenza degli algoritmi genetici, nell'algoritmo evolutivo l'individuo non è direttamente il quadrato, bensì è una coppia di due quadrati $ \left(M, \Sigma \right) $. Il primo quadrato, $ M $, è quello che si cerca di rendere magico, mentre il secondo, $ \Sigma $, contiene delle informazioni utili per le mutazioni. 
+
+Gli elementi $ \sigma_{ij} $ di $ \Sigma $ determinano il range di valori che l'elemento $ m_{ij} $ può assumere a causa di una mutazione. $ \Sigma $ è una matrice dinamica, che subisce essa stessa mutazioni come $ M $ e che evolve tenendo traccia di come 
 
 \subsection{Mutazioni}
+Siccome negli algoritmi evolutivi non vi è crossover, per esplorare lo spazio delle soluzioni si utilizzano esclusivamente mutazioni.
+Inoltre non è necessario lavorare con una popolazione composta da numero elevato di individui, ma se ne utilizza uno solo, il quale produce un numero fissato di figli. 
+
+Sono state utilizzati due tipi di mutazioni: le mutazioni puntuali che coinvolgono solo due numeri, e le mutazioni lineari, le quali invece coinvolgono tutti i valori di una linea.
+
+Sia randint$ (a,b) $ una funzione che estrae un numero intero nell'intervallo $ (a,b) $ con probabilità uniforme. Questa funzione è fornita da Mathematica come \texttt{Random[Integer]} e \texttt{RandomInteger[]}. Siano inoltre $ n_{row} $ e $ n_{col} $ rispettivamente il numero di righe e di colonne non magiche del quadrato.
 
 \subsubsection{Mutazioni puntuali}
 Nella prima fase dell'algoritmo ogni individuo è mutato con una delle seguenti tre mutazioni casualmente selezionata. 
 
-Si definiscono tre insiemi di mutazione:
-\[S_1 = \{\text{\small Numeri la cui riga e colonna non è magica}\}	\]
-\[S_{2r} = \{\text{\small Numeri in righe non è magiche}\}	\]
-\[S_{2c} = \{\text{\small Numeri in colonne non è magiche}\}	\]
-\[S_{2} = S_{2r} \cup S_{2c}	\]
+Si definiscono degli insiemi di mutazione:
+\begin{itemize}
+	\item $ S_1 $:  Numeri la cui riga e colonna non è magica.
+	\item $ S_{2r} $: Numeri in righe non è magiche.
+	\item $ S_{2c} $: Numeri in colonne non è magiche.
+	\item $ S_{2} = S_{2r} \cup S_{2c} $
+\end{itemize}
+E' evidente inoltre che:
+\[S_1 = S_{2r} \cap S_{2c} \]
+Ogni individuo è mutato con una delle seguenti tipologie di mutazione selezionata in modo casuale:
 
-Ogni individuo è mutato con una delle seguenti tipologie di mutazione selezionata in modo casuale.
 \paragraph{Mutazione da $ \mathbf{S_1} $ a $ \mathbf{S_2} $}
-Ogni elemento di $ S_1 $ è sottoposto a mutazione con probabilità $ 1\slash(n_{row}n_{col}) $. Se un elemento $ x $ aventi indici $ i $ e $ j $ è selezionato per essere mutato si calcola il valore:
+Ogni elemento di $ S_1 $ è sottoposto a mutazione con probabilità $ 1\slash(n_{row}n_{col}) $. Se un elemento $ x $ aventi indici $ i $ e $ j $ è selezionato per essere mutato, allora si calcola il valore:
 \[ n = 	x + \text{randint}(-\sigma_{ij}, \sigma_{ij})  \]
 Inoltre per evitare che $ n $ sia un numero non accettabile:
 \[
 \begin{cases}
-	n = \text{randint}(1,N) & \text{se} \quad n < 1  \\
-	n = N^2 - \text{randint}(0,N) & \text{se} \quad n > N^2  
+n = \text{randint}(1,N) & \text{se} \quad n < 1  \\
+n = N^2 - \text{randint}(0,N) & \text{se} \quad n > N^2  
 \end{cases}
 \]
-Si cerca quindi in $ S_2 $ l'elemento che più si avvicina a questo. Ciò il numero $ t $ in $ S_2 $ tale che sia minimizzato $ \min_{t \in S_2} \lvert n - t \rvert $. Questi due elementi vengono quindi scambiati. 
-
-Una volta che si sono scambiati i due numeri si effettua una mutazione anche sul valore di $ \sigma $.
-Il nuovo valore di $ \sigma_{ij} $ è dato da: 
-\[ n = 	x + \text{randint}(-1, 1)  \]
+Si cerca quindi in $ S_2 $ l'elemento che più si avvicina a $ n $, cioè il numero $ t $ in $ S_2 $ tale che sia minimizzato il valore di 
+\[\min_{t \in S_2} \lvert n - t \rvert \]
+Gli elementi $ n $ e $ t $ sono quindi scambiati. Una volta avvenuto lo scambio si effettua una mutazione anche sul valore di $ \sigma $.
+Il nuovo valore $ z $ di $ \sigma_{ij} $ è dato da: 
+\[ z = 	\sigma_{ij} + \text{randint}(-1, 1)  \]
 Anche in questo caso per evitare di avere dei valori insensati si pone:
 \[
 \begin{cases}
-n = \text{randint}(1,N) & \text{se} \quad n < 1  \\
-n = N^2 - \text{randint}(0,N) & \text{se} \quad n > N^2  
+z = \text{randint}(1,N) & \text{se} \quad n < 1  \\
+z = N^2 - \text{randint}(0,N) & \text{se} \quad n > N^2  
 \end{cases}
 \]
 
@@ -319,91 +329,204 @@ Una volta che l'algoritmo trova almeno un quadrato avente tutte le righe e le co
 
 Per ogni individuo si eseguono $ N $ mutazioni lineari con probabilità unitaria. Si nota tuttavia che è possibile che le due linee che vengono estratte per essere scambiate coincidano, e ciò corrisponde a non aver effettuato alcuna mutazione. Equivalentemente si può dire che la probabilità di mutazione lineare è di $ 1 - \frac{1}{N} $ considerando tuttavia solo linee differenti. 
 
+\subsection{Metodi di selezione}
+Una volta che tutta la popolazione è andata incontro a mutazione bisogna selezionare quale sarà il nuovo genitore. Vengono utilizzati due metodi di selezione (\emph{evolution strategies}) differenti per incentivare o meno la variabilità degli individui. Questi sono metodi standard negli algoritmi evolutivi:
+\begin{itemize}
+	\item$ (\mu, \lambda)-ES $: La nuova generazione di genitori è formata dai migliori figli della precedente.
+	\item $ (\mu + \lambda)-ES $: La nuova generazione è formata dagli individui migliori tra i genitori e i figli della generazione precedente.
+\end{itemize}
+In queste diciture $ \mu $ indica i genitori della generazione precedente, mentre $ \lambda $ i figli. 
+L'utilizzo della seconda strategia evolutiva garantisce che non vengono persi individui buoni ma modificati dalle mutazioni, mentre l'utilizzo del primo permette di esplorare più velocemente lo spazio delle soluzioni. 
+
+Nell'algoritmo implementato in questo lavoro sono state utilizzate entrambe le strategie evolutive a seconda di quale sia più utile nel momento della selezione. 
+
 \subsection{Rettificazioni locali}
 
-Senza intervenire direttamente in modo sistematico sulla costruzione dei quadrati, anche l'algoritmo evolutivo, come quello genetico non è molto più efficiente di una ricerca casuale tra lo spazio delle soluzioni, e per questo motivo non converge quando lo spazio delle soluzioni è troppo grosso, quindi già con quadrati $ 6\times6 $
-
+Senza intervenire direttamente in modo sistematico sulla costruzione dei quadrati, anche l'algoritmo evolutivo, come quello genetico, non è molto più efficiente di una ricerca casuale nello spazio delle soluzioni, e per questo motivo non converge quando lo spazio delle soluzioni è troppo grosso, e fallisse già con quadrati di piccole dimensioni. Per ovviare a questo problema Xie e Kang hanno proposto di utilizzare delle \emph{rettificazioni locali}: quando gli individui sono abbastanza buoni vengono passati in rassegna per cercare se vi sono degli scambi che diminuiscono il numero di righe sbagliate oppure che rendono le diagonali magiche. Si definiscono \emph{rettificazioni locali lineari} quelle che hanno come obiettivo la diminuzione delle righe non magiche, mentre \emph{rettificazioni locali diagonali} quelle che intendono aggiustare le diagonali.
 
 \subsubsection{Rettificazioni locali lineari}
+Sono state implementate due tipologie di rettificazioni locali lineari: lo scambio di una coppia, e lo scambio di due coppie tali che soddisfino alcune condizioni. Queste condizioni garantiscono che lo scambio renda magica una o più linee senza rovinare le altre. Non si fanno analisi a più di due coppie perché sarebbe un compito computazionalmente troppo oneroso. 
+
+Si definiscono $ \text{col}(k) $ come la somma di tutti gli elementi sulla colonna $ k $ e $ \text{row}(h) $ come la somma di tutti gli elementi sulla riga $ h $. Se una riga $ s $ è magica allora vale che $ \text{row}(s) = \mathit{m}$ e analogamente per le colonne.
+
+\paragraph{Scambio di una coppia} Due numeri $ a_{ks} $ e $ a_{ls} $ sono scambiati alla riga $ k $ e $ l $ e alla colonna $ s $ se sono soddisfatte: 
+\begin{itemize}
+	\item $ \text{row}(k) - \mathit{m} = a_{ks} - a_{ls} $
+	\item $ \mathit{m} - \text{row}(l) = a_{ks} - a_{ls} $
+\end{itemize}
+Un esempio di questa rettificazione è riportato in appendice. 
+
+\paragraph{Scambio di due coppie} I numeri $ a_{ks} $ e $ a_{lt} $ sono scambiati con i numeri $ a_{ls} $ e $ a_{kt} $ (il primo con il primo e il secondo con il secondo), corrispondenti alle righe $ k $ e $ l $ e alle colonne $ s $ e $ t $ se sono soddisfatte:
+\begin{itemize}
+	\item $ \text{row}(k) - \mathit{m} = a_{ks} + a_{kt} -a_{lt} - a_{ls} $
+	\item $ \mathit{m} - \text{row}(l) = a_{ks} + a_{kt} -a_{lt} - a_{ls} $
+\end{itemize}
+
+Le condizioni duali sono applicate anche alle colonne con gli ovvi scambi.  
+
+Quando si esegue questa correzione tutto il quadrato viene passato in rassegna, per far ciò si utilizzano cicli innestati: uno che fissa il primo elemento, e il secondo che fa scorrere l'intero quadrato in cerca di numeri che soddisfino le condizioni richieste. Per questo motivo in generale il numero di cicli innestati è quattro, due per gli indici del primo elemento, e due per gli indici del secondo elemento, per questo motivo la complessità della rettificazione è sicuramente maggiore a $\mathcal{O}(N^4)$. 
 
 \subsubsection{Rettificazioni locali diagonali}
+Una volta che si è realizzato un quadrato semimagico per ottenere il quadrato magico bisogna intervenire utilizzando metodi deterministici. Si fanno dunque i seguenti scambi:
+
+Siano dg1 la somma dei termini sulla diagonale principale, e dg2 la somma dei termini sull'antidiagonale, cioè:
+\[\text{dg1} = \sum_{k = 1}^Na_{kk}  \qquad \text{dg2} = \sum_{k = 1}^Na_{k,-k}  \]
+Dove con $ -k $ si intende l'indice $ N-k+1 $, che è il $ k $-esimo elemento della matrice leggendo da destra a sinistra.
+
+Se sono soddisfatte le condizioni:
+\begin{itemize}
+	\item $ a_{ii} + a_{ij} = a_{ji} + a_{jj} $
+	\item $ \left(a_{ii} +  a_{jj} \right) - \left(a_{ij} +  a_{ji} \right) = \text{dg1} - \mathit{m}$
+\end{itemize}
+allora $ a_{ii} $ è scambiato con $ a_{j1} $ e $ a_{ji} $ con $ a_{jj} $. In modo simmetrico per l'antidiagonale.
+
+Se sono soddisfatte le condizioni:
+\begin{itemize}
+	\item $ \left(a_{ii} +  a_{jj} \right) - \left(a_{ij} +  a_{ji} \right) = \text{dg1} - \mathit{m}$
+	\item $ \left(a_{i,-i} + a_{j,-j}\right) - \left(a_{i,-j} + a_{j,-i}\right) = \text{dg2} - \mathit{m}$
+\end{itemize}
+allora la riga $ i $ è scambiata con la riga $ j $. Simmetricamente con colonne.
 
 \subsection{Implementazione in Mathematica}
 
-%------------------------------------------------
+Il punto critico dell'implementazione sono le rettificazioni locali: è possibile implementarle senza manipolare direttamente gli indici e quindi sfruttando gli strumenti nativi di Mathematica?
+
+L'itero algoritmo è esposto nel diagramma di flusso riportato in figura \ref{fig:flowchart}
 
 
 \section{Risultati}
 
 \subsection{Algoritmi genetici}
+Gli algoritmi genetici implementati non sono stati in grado di produrre i risultati sperati: nessuna combinazione di fitness, e criterio di selezione è risuscita a produrre quadrati di dimensioni superiori al $ 3\times 3 $. I risultati ottenuti sono riportati in tabella \ref{tab:risultati_genetic}.
 
-
-
-\subsection{Algoritmo di Xie-Kang}
-
-\begin{table}
+\begin{table}[htbp]
 	\centering
-	\caption{Risultati ottenuti: $ N $ è l'ordine del quadrato, $ n_{tent} $ il numero di esecuzioni dell'algoritmo, $ n_{ok} $ il numero di quadrati costruiti con successo entro 30000 generazioni, $ \tau $ il tempo medio di costruzione in secondi, $ \tau \slash \tau_0 $ è il rapporto tra il tempo medio con il tempo medio per la costruzione del quadrato con $ N = 10 $, $ n_{gen} $ è il numero medio di generazioni.}
-\begin{tabular}{c|ccccc}
-	\hline
-	$ N $ & $ n_{tent} $ & $ n_{ok} $ & $ \tau $ (s) & $ \tau \slash \tau_0 $ & $ n_{gen} $ \\ \hline
-	 10   &      10      &     10     &              &           1            &  \\ 
-	 15   &      10      &     10     &              &           1            &  \\ 
-	 20   &      10      &     10     &              &           1            &  \\ 
-	 25   &      10      &     10     &              &           1            &  \\ 
-	 30   &      10      &     10     &              &           1            &  \\ 
-	 35   &      10      &     10     &              &           1            &  \\ 
-	 40   &      10      &     10     &              &           1            &  \\ 
-	 45   &      10      &     10     &              &           1            &  \\ 
-	 50   &      10      &     10     &              &           1            &  \\ \hline
-\end{tabular} 
-\label{tab:risultati_xie_kang}
-\end{table}
-
-\begin{table}
-	\centering
-	\caption{Risultati ottenuti: $ N $ è l'ordine del quadrato, $ F,C $ la funzione di fitness e il criterio di selezione, $ n_{tent} $ il numero di esecuzioni dell'algoritmo, $ n_{ok} $ il numero di quadrati costruiti con successo entro 10000 generazioni.}
+	\caption{Risultati ottenuti: $ N $ è l'ordine del quadrato, $ F,C $ la funzione di fitness e il criterio di selezione, $ n_{tent} $ il numero di esecuzioni dell'algoritmo, $ n_{ok} $ il numero di quadrati costruiti con successo entro $ \num{10000} $ generazioni. Le abbreviazioni utilizzate sono riportate in tabella \ref{tab:abb} }
 	\begin{tabular}{cc|cc}
 		\hline
-		$ N $ & $ F,C $ & $ n_{tent} $ & $ n_{ok} $ \\ \hline
-		  3   &         &      10      &     0      \\
-		  4   &         &      10      &     0      \\
-		  4   &         &      10      &     0      \\
-		  4   &         &      10      &     0      \\
-		  4   &         &      10      &     0      \\
-		 35   &         &      10      &     0      \\
-		 40   &         &      10      &     0      \\
-		 45   &         &      10      &     0      \\
-		 50   &         &      10      &     0      \\ \hline
+		$ N $ &    F,C    & $ n_{tent} $ & $ n_{ok} $ \\ \hline
+		3   & tS, fP, E &      10      &     7      \\
+		3   &  tS, fP   &      10      &     4      \\
+		3   & tA, fP, E &      10      &     8      \\
+		3   & cL, F, E  &      10      &     6      \\
+		3   & tS, sS, E &      10      &     1      \\
+		4   & tS, fP, E &      10      &     0      \\
+		4   & tS, F, E  &      10      &     0      \\
+		4   &  tA, fP   &      10      &     0      \\
+		4   &  tA, sS   &      10      &     0      \\
+		4   &  cL, fP   &      10      &     0      \\
+		10   & cL, fP, E &      10      &     0      \\
+		10   & tS, fP, E &      10      &     0      \\
+		10   & tS, F, E  &      10      &     0      \\ \hline
 	\end{tabular} 
 	\label{tab:risultati_genetic}
 \end{table}
 
-%------------------------------------------------
+\begin{table}[htbp]
+	\centering
+	\caption{Abbreviazioni utilizzate nella tablela \ref{tab:risultati_genetic}. }
+	\begin{tabular}{c|c}
+		Sigla &            Metodo             \\ \hline
+		fP   & \texttt{fitnessProportionate} \\
+		sS   &    \texttt{similarSquare}     \\
+		F   &       \texttt{fittests}       \\
+		E   &       \texttt{elitism}        \\
+		tS   &     \texttt{totalSquared}     \\
+		tA   &       \texttt{totalAbs}       \\
+		cL   &     \texttt{correctLines}     \\ \hline
+	\end{tabular} 
+	\label{tab:abb}
+\end{table}
+
+\subsection{Algoritmo di Xie-Kang}
+Al contrario degli algoritmi genetici, l'algoritmo evolutivo ha prodotto con successo un discreto numero di quadrati magici. Sono stati costruiti quadrati di ordine dal $ 10 $ a $ 40 $, e in nessun caso l'algoritmo si è trovato in una condizione metastabile e non è giunto a convergenza. Curiosamente, invece, per quadrati di dimensioni piccole (da $ 4\times 4 $ e $ 6\times6 $) è capitato che il programma rimanga in una condizione metastabile. 
+
+Si sono raccolte delle statistiche per caratterizzare come varia il tempo di esecuzione del programma al variare della dimensione dell'input e per confrontare i dati raccolti con quelli di Xie e Kang. 
+
+Nella tabella \ref{tab:risultati_xie_kang} sono riportati i dati raccolti, mentre nella figura \ref{fig:scala_xie_kang} sono rappresentati i tempi di esecuzione al variare dell'ordine del quadrato con un possibile andamento interpolante. I dati raccolti si accordato con una legge di potenza avente per esponente un valore compreso tra $ 5 $ e $ 6 $. Con i dati a disposizione questo esponente vale $ \sim \num{5.19} $. Questo è un miglioramento sostanziale rispetto alla ricerca \emph{brute-force}.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Risultati ottenuti: $ N $ è l'ordine del quadrato, $ n_{tent} $ il numero di esecuzioni dell'algoritmo, $ n_{ok} $ il numero di quadrati costruiti con successo entro $ \num{30000} $ generazioni, $ \tau $ il tempo medio di costruzione, $ \tau \slash \tau_0 $ è il rapporto tra il tempo medio con il tempo medio per la costruzione del quadrato con $ N = 10 $, $ n_{gen} $ è il numero medio di generazioni.}
+\begin{tabular}{c|ccccc}
+	\hline
+	$ N $ & $ n_{tent} $ & $ n_{ok} $ &        $ \tau $        & $ \tau \slash \tau_0 $ & $ n_{gen} $ \\ \hline
+	  3   &      10      &     10     & $ \SI{0.12}{\second} $ &           0            &     3       \\
+	 10   &      10      &     10     &  $ \SI{55}{\second} $  &           1            &     178     \\
+	 15   &      10      &     10     & $ \SI{5.75}{\minute} $ &           6            &     536     \\
+	 20   &      10      &     10     & $ \SI{31.2}{\minute} $ &           33           &    1085     \\
+	 25   &      10      &     10     &  $ \SI{1.73}{\hour} $  &           112          &    1893     \\
+	 30   &      10      &     10     &  $ \SI{4.23}{\hour} $  &           275          &    3007     \\
+	 35   &      10      &     10     &                        &           1            &  \\
+	 40   &      10      &     10     &                        &           1            &  \\
+	 45   &      10      &     10     &                        &           1            &  \\
+	 50   &      10      &     10     &                        &           1            &  \\ \hline
+\end{tabular} 
+\label{tab:risultati_xie_kang}
+\end{table}
+
+\begin{figure}[htbp]
+	\centering
+	\begin{tikzpicture}
+	\begin{axis}[
+	axis lines=left, enlarge x limits=true,
+	%	xtick={10,15,20,25,30},
+	xtick = data,
+	scaled y ticks=base 10:-3,
+	ymin=0,
+	xmin=7.5,
+	title = Tempo di esecuzione vs ordine,  
+	xlabel = Ordine,
+	ylabel = Tempo di esecuzione,
+	grid=major,
+	grid style={dashed,gray!30},	
+	y unit=\si{\second},
+	width=\columnwidth,
+	]
+	\addplot [only marks,] table{
+		10 55.2336
+		15 345.519
+		20 1873.96
+		25 6229.42
+		30 15222.0
+	};
+	\addplot[red,domain=1:32,samples=100] {0.0003186818118*x^(5.197200898)};
+	\end{axis}
+	\end{tikzpicture}
+	\caption{Tempi di computazione medi su dieci esecuzioni dell'algoritmo evolutivo per quadrati di ordine dal 10 al 30. La curva rossa descrive una possibile legge di scala: è una legge di potenza $ \alpha x^{\beta} $ con esponente $ \beta $ compreso tra $ 5 $ e $ 6 $. }
+	\label{fig:scala_xie_kang}
+\end{figure}
 
 \section{Conclusioni}
 
-\subsection{Limitazioni degli algoritmi stocastici}
+\subsection{Limiti degli algoritmi stocastici}
 In questo lavoro sono stati analizzati due possibili algoritmi stocastici per la costruzioni di quadrati magici, di cui, tuttavia, solo uno è in grado di arrivare effettivamente ad un risultato. 
 
 Il crossover risulta inutile in quanto la prescrizione che il quadrato abbia tutti numeri diversi impedisce al crossover di produrre un individuo migliore a partire da due quadrati buoni selezionando opportunamente le righe. A causa dlele ricostruzione del quadrato dopo il crossover, gli algoritmi genetici con crossover per questo scopo sono quasi equivalenti alla ricerca casuale. 
 
-Il motivo per cui gli algoritmi genetici non convergono è che non si può trovare una funzione di fitness che 
+Il motivo per cui gli algoritmi genetici non convergono è che non si può trovare una funzione di fitness che individui un un percorso verso l'individuo perfetto. E' possibile costruire un quadrato che è perfetto a meno di due sole permutazioni ma che ha fino a otto linee non magiche, e viceversa è possibile costruire un quadrato che è ha tutte le linee magiche a meno di due, eppure che sia molto distante in termini di permutazioni da un quadrato magico.
 
 \subsection{Confronto con i risultati di Xie e Kang}
 
 L'attuale implementazione è quindi adatta per la costruzioni di quadrati di ordine relativamente piccolo.
 
-\begin{table}
+Anche questa implementazione individua tre fasi nella ricerca del quadrato magico:
+\begin{enumerate}
+	\item Durante la prima fase la fitness decresce vertiginosamente mentre il numero di linee non magiche rimase costante: nessuna linea ha la somma corretta.
+	\item Quando la fitness è sufficientemente bassa (inferiore a $ 50 \times N $) cominciano ad essere utilizzati i meccanismi di rettificazione locale lineare: questo aggiusta molte linee, ma non abbassa sensibilmente la funzione di fitness.
+	\item Infine si riesce a produrre un quadrato semimagico, in questa fase si utilizzano le permutazioni lineari e le rettificazioni per esplorare tutto lo spazio delle soluzioni, come mostra il grafico \ref{fig:fitvsgen}, in cui le brusche oscillazioni di fitness indicano che molte soluzioni differenti sono state tentata. 
+\end{enumerate}
+
+\begin{table}[htbp]
 	\centering
-	\caption{Tempi di esecuzioni medi delle varie routine dell'algoritmo per quadrato di ordine 20. Siccome $ rectifyLines $ ha complessità maggiore degli altri metodi, quindi aumentando l'ordine tende a occupare tutto il tempo di elaborazione.}
+	\caption{Tempi di esecuzioni medi delle varie routine dell'algoritmo per quadrato di ordine 20. Siccome $ rectifyLines $ ha complessità maggiore degli altri metodi, quindi aumentando l'ordine tende a occupare tutto il tempo di elaborazione. Il restante tempo è speso nell'eseguire operazioni per produrre le statistiche.}
 \begin{tabular}{cc}
 	\hline
-	         Routine          & Tempo speso ($ \si{\percent} $)\\ \hline
-	     \texttt{mutate}      &  \\ 
-	 \texttt{selectFittest}   &  \\ 
-	  \texttt{rectifyLines}   &  \\ 
-	\texttt{rectifyDiagonals} &  \\ \hline
+	         Routine          & Tempo speso ($ \si{\percent} $) \\ \hline
+	 \texttt{selectFittest}   &          $ \sim 0.01 $           \\
+	     \texttt{mutate}      &           $ \sim 0.7 $            \\
+	\texttt{rectifyDiagonals} &           $ \sim 7.7 $           \\
+	  \texttt{rectifyLines}   &           $ \sim 91 $           \\ \hline
 \end{tabular} 
 	\label{tab:tempi_gentic}
 \end{table}
@@ -411,103 +534,67 @@ L'attuale implementazione è quindi adatta per la costruzioni di quadrati di ord
 \subsection{Possibili sviluppi futuri}
 L'attuale implementazione dell'algoritmo evolutivo riesce sempre a produrre quadrati magici, tuttavia il tempo di elaborazione necessario per costruire quadrati di grandi dimensioni è molto elevato, come si nota dalla tabella \ref{tab:risultati_xie_kang}, e per questo motivo è impensabile utilizzarlo per costruire quadrati ancora più grandi. La quasi totalità del tempo di elaborazione è spesa nel cercare di rettificare i quadrati, questo perché tali processi devono passare in rassegna l'intero quadrato più volte alla ricerca di determinate condizioni, e per questo motivo l'implementazione contiene numerosi cicli nested, che la rendono molto pesante dal punto di vista del tempo di esecuzione.
 
-Il tempo di computazione può essere sensibilmente ridotto riscrivendo i metodi di rettificazione in modo da renderli compilabili con il comando \texttt{Compile}.
+Il tempo di computazione può essere sensibilmente ridotto riscrivendo i metodi di rettificazione in modo da renderli compilabili con il comando \texttt{Compile[]}.
 
-Mathematica si è rivelato non essenziale ai fini dell'implementazione dell'algoritmo, e anzi probabilmente ne ha limitato le potenzialità. Alcune funzioni native, come \texttt{Map[]}, \texttt{Table[]}, \texttt{Replace[]} sono state utilizzate pesante e si sono rivelate strumenti di grande aiuto per la semplificazione del codice. Tuttavia, il cuore dell'algoritmo, cioè i metodi di rettificazione, richiedono che si percorra l'intero quadrato più volte lavorando esplicitamente con gli indici, e questo costituisce un grosso limite per \texttt{Mathematica}, il quale non gestisce in modo sufficientemente le risorse per questi cicli in maniera altrettanto efficiente rispetto a linguaggi compilati come il \texttt{C}.
+Mathematica si è rivelato non essenziale ai fini dell'implementazione dell'algoritmo, e anzi probabilmente ne ha limitato le potenzialità. Alcune funzioni native, come \texttt{Map[]}, \texttt{Table[]}, \texttt{Replace[]} sono state utilizzate pesante e si sono rivelate strumenti di grande aiuto per la semplificazione del codice. La gestione delle liste di Mathematica ha permesso di scrivere in maniera concisa ed elegante tutti i metodi che si applicano alla intere popolazioni intere.
+
+Tuttavia, il cuore dell'algoritmo, cioè i metodi di rettificazione, richiedono che si percorra l'intero quadrato più volte lavorando esplicitamente con gli indici, e questo costituisce un grosso limite per \texttt{Mathematica}, il quale non gestisce in modo sufficientemente le risorse per questi cicli in maniera altrettanto efficiente rispetto a linguaggi compilati come il \texttt{C}.
 
 Il fatto che sia possibile in linea teorica compilare l'intero algoritmo di Xie e Kang con Mathematica mostra come effettivamente non sia necessario tale linguaggio ai fini dell'implementazione. 
 
 \section{Appendice}
 
-Esempio rettificazione su riga 1:
+\subsection{Calcolo del numero magico per un quadrato magico normale}
+Dato un quadrato magico normale (cioè che contiene tutti i numeri da $ 1 $ a $ N $) allora ciascuna linea e le diagonali hanno per somma il valore magico $ \mathit{m} $, questo significa che sommando tutti i numeri del quadrato si ottiene $  N \mathit{m} $ che è la somma di tutte le somme di ogni riga. Quindi:
+\[  N \mathit{m} = \sum_{n = 1}^{N^2}n		\]
+Ma la somma al membro destro può essere valutata esplicitamente:
+\[	\sum_{n = 1}^{N^2}n = \frac{1}{2} N^2 (N^2 + 1)	\]
+Da cui utilizzando la relazione precedente:
+\[	 \mathit{m} = \frac{1}{2} N (N^2 + 1)	\]
 
-Prima: 
-
-\begin{tabular}{|c|c|c|}
-	\hline 
-	\rule[-1ex]{0pt}{2.5ex} 1 & 5 & 6 \\ 
-	\hline 
-	\rule[-1ex]{0pt}{2.5ex} 4 & 3 & 8 \\ 
-	\hline 
-	\rule[-1ex]{0pt}{2.5ex} 2 & 7 & 9 \\ 
-	\hline 
-\end{tabular} 
-
-Dopo: 
-
-\begin{tabular}{|c|c|c|}
-	\hline 
-	\rule[-1ex]{0pt}{2.5ex} 1 & 5 & 9 \\ 
-	\hline 
-	\rule[-1ex]{0pt}{2.5ex} 4 & 3 & 8 \\ 
-	\hline 
-	\rule[-1ex]{0pt}{2.5ex} 2 & 7 & 6 \\ 
-	\hline 
-\end{tabular} 
-
-
-Esempio di rettificazione diagonale 2:
-
-\begin{figure}[!htbp]
+\subsection{Esempio di rettificazione lineare}
+Si riporta qui un esempio di rettificazione locale lineare: con una permutazione si passa da un quadrato con una sola riga magica, ad uno con tutte le righe magiche.
+\begin{figure}[htbp]
 	\centering
 	\subfloat[Prima]{
 		\begin{tikzpicture}[scale = 1]
 		\draw (0,0) grid (3,3);
-		\node at (1.5, 1.5) {4};
-		\node at (0.5, 0.5) {8};
-		\node at (1.5, 0.5) {7};
-		\node at (0.5, 2.5) {9};
-		\node at (0.5, 1.5) {3};
-		\node at (2.5, 2.5) {1};
-		\node at (1.5, 2.5) {5};
-		\node at (2.5, 0.5) {6};
-		\node at (2.5, 1.5) {2};
+		\node at (1.5, 1.5) {\large 3};
+		\node at (0.5, 0.5) {\large 2};
+		\node at (1.5, 0.5) {\large 7};
+		\node at (0.5, 2.5) {\large 1};
+		\node at (0.5, 1.5) {\large 4};
+		\node at (2.5, 2.5) {\large 6};
+		\node at (1.5, 2.5) {\large 5};
+		\node at (2.5, 0.5) {\large 9};
+		\node at (2.5, 1.5) {\large 8};
 		\end{tikzpicture}		
 	}
 	\subfloat[Dopo]{
 		
 		\begin{tikzpicture}[scale = 1]
 		\draw (0,0) grid (3,3);
-		\node at (1.5, 1.5) {\textbf{5}};
-		\node at (0.5, 0.5) {8};
-		\node at (1.5, 0.5) {7};
-		\node at (0.5, 2.5) {9};
-		\node at (0.5, 1.5) {3};
-		\node at (2.5, 2.5) {\textbf{2}};
-		\node at (1.5, 2.5) {\textbf{4}};
-		\node at (2.5, 0.5) {6};
-		\node at (2.5, 1.5) {\textbf{1}};
 		
 		\draw[fill = gray, opacity = 0.2]
-			(1,1) rectangle (3,3);			
+		(2,2) rectangle (3,3);	
+		
+		\draw[fill = gray, opacity = 0.2]
+		(2,1) rectangle (3,0);	
+		
+		\node at (1.5, 1.5) {\large 3};
+		\node at (0.5, 0.5) {\large 2};
+		\node at (1.5, 0.5) {\large 7};
+		\node at (0.5, 2.5) {\large 1};
+		\node at (0.5, 1.5) {\large 4};
+		\node at (2.5, 2.5) {\large \textbf{9}};
+		\node at (1.5, 2.5) {\large 5};
+		\node at (2.5, 0.5) {\large \textbf{6}};
+		\node at (2.5, 1.5) {\large 8};
 		\end{tikzpicture}			
 	}
-	\caption{Esempio di rettificazione diagonale 2}
+	\caption{Esempio di rettificazione lineare. Dopo la rettificazione la prima è l'ultima riga diventano magiche.}
 	
 \end{figure}
-Dopo:
-
-
-
-Righe e colonne magiche
-\begin{tabular}{|c|c|c|}
-	\hline 
-	\rule[-1ex]{0pt}{2.5ex} 9 & 5 & 1 \\ 
-	\hline 
-	\rule[-1ex]{0pt}{2.5ex} 3 & 4 & 2 \\ 
-	\hline 
-	\rule[-1ex]{0pt}{2.5ex} 8 & 7 & 6 \\ 
-	\hline 
-\end{tabular} 
-\begin{tabular}{|c|c|c|}
-	\hline 
-	\rule[-1ex]{0pt}{2.5ex} 9 & 1 & 5 \\ 
-	\hline 
-	\rule[-1ex]{0pt}{2.5ex} 2 & 6 & 7 \\ 
-	\hline 
-	\rule[-1ex]{0pt}{2.5ex} 4 & 8 & 3 \\ 
-	\hline 
-\end{tabular} 
 
 %----------------------------------------------------------------------------------------
 %	REFERENCE LIST
@@ -543,6 +630,21 @@ Kraitchik, M. (1942).
 \bibitem{Trump}
 Trump, W. (2015).
 \newblock \url{http://www.trump.de/magic-squares/estimates/index.html}.
+
+\bibitem{Mitchell:1998}
+Mitchell, M. (1996).
+\newblock An Introduction to Genetic Algorithms.
+\newblock MIT Press, Cambridge.
+
+\bibitem{AhmedEnder:2014}
+Ahmed, K. e Ender Ö. (2014).
+\newblock Constructing Constrained-Version of Magic Squares Using Selection Hyper-heuristics.
+\newblock {\em The Computer Journal (2014) 57 (3)}.
+
+\bibitem{Abe:1994}
+Abe, G. (1994).
+\newblock Unsolved Problems on Magic Squares.
+\newblock {\em Discrete Mathematics (1993) 127 (1–3).}
  
 \end{thebibliography}
 
@@ -551,110 +653,30 @@ Trump, W. (2015).
 
 \onecolumn
 
+\begin{figure}[htbp]
+	\centering
+	\subfloat[Fitness vs generazione al variare dell'ordine dei quadrati. Dove la fitness è negativa il quadrato è semimagico è si fanno rettificazioni locali diagonali. In questa fase non è rappresentato il nuovo genitore, ma il figlio migliore. Questo mostra come sia esplorato lo spazio delle soluzioni. ]{
+		\includegraphics[width=0.9\columnwidth,keepaspectratio=true]{fitvsgen}
+		\label{fig:fitvsgen}
+		}
+	
+	\centering
+	\subfloat[Linee non magiche vs generazione al variare dell'ordine dei quadrati. ]{\includegraphics[width=0.9\columnwidth,keepaspectratio=true]{incvsgen}}
+	\caption{Statistiche al variare dell'ordine del quadrato: blu 10, giallo 15, verde 20, rosso 25, viola 30.}
+\end{figure}
 
-\resizebox{1\textwidth}{!}{
-\begin{tikzpicture}[font={\sf \small}]
-\def\smbwd{2cm}
-\node (terminal1) at (0,0) [draw, terminal,
-minimum width=\smbwd,
-minimum height=0.5cm] {INIZIO};
-\node (predproc1) at (0,-1.5) [draw, predproc, align=center,
-minimum width=\smbwd,
-minimum height=1cm] {INIZIALIZZA\\ UN INDIVIDUO};
-\node (calcola1) at (0, -3.5) [draw, process, align=center,
-minimum width=\smbwd,
-minimum height=1cm] {CALCOLA LINEE SBAGLIATE\\ $ N $, $ N_r $, $ N_c $};
-\node (clona) at (0, -7.5) [draw, process,
-minimum width=\smbwd,
-minimum height=1cm] {CLONA 10 INDIVIDUI};
-\node (decide1) at (0,-5.5) [draw, decision,
-minimum width=\smbwd,
-minimum height=1cm] {$ N = 0 $};
-\node (end1) at (5,-5.5) [draw, terminal,
-minimum width=\smbwd,
-minimum height=1cm] {FINE};
-\node (decide2) at (0,-10) [draw, decision,
-minimum width=\smbwd,
-minimum height=1cm] {\scriptsize $ N_{r} + N_{c} = 0 $};
-\node (permlin) at (9,-10) [draw, predproc, align=center,
-minimum width=\smbwd,
-minimum height=1cm] {MUTAZIONE: \\ PERMUTA LINEE};
-\node (cercmag2) at (9,-12) [draw, predproc, align=center,
-minimum width=\smbwd,
-minimum height=1cm] {CERCA: \\ QUADRATO MAGICO};
-\node (calcfitmin1) at (9,-14) [draw, process, align=center,
-minimum width=\smbwd,
-minimum height=1cm] {CALCLOLA FINTESS \\ MINIMA $ F_m $};
-\node (decidefitmin) at (9,-16.5) [draw, decision,
-minimum width=\smbwd,
-minimum height=1cm] {$ F_m < 100 $};
-\node (recdiag) at (13,-16.5) [draw, predproc, align=center,
-minimum width=\smbwd,
-minimum height=1cm] {RETTIFICA\\ DIAGONALI};
-\node (cercmag3) at (13,-18.5) [draw, predproc, align=center,
-minimum width=\smbwd,
-minimum height=1cm] {CERCA\\ QUADRATO MAGICO};
-\node (permnum) at (0,-12) [draw, predproc, align=center,
-minimum width=\smbwd,
-minimum height=1cm] {MUTAZIONE: \\ PERMUTA NUMERI};
-\node (cercmag) at (0,-14) [draw, predproc, align=center,
-minimum width=\smbwd,
-minimum height=1cm] {CERCA \\ QUADRATO MAGICO};
-\node (end2) at (5,-14) [draw, terminal,
-minimum width=\smbwd,
-minimum height=1cm] {FINE};
-\node (calcfitmin2) at (0,-16) [draw, process, align=center,
-minimum width=\smbwd,
-minimum height=1cm] {CALCLOLA FINTESS \\ MINIMA $ F_m $};
-\node (decidefitmin2) at (0,-18.5) [draw, decision,
-minimum width=\smbwd,
-minimum height=1cm] {\scriptsize $ F_m < 50\times N $};
-\node (reclin) at (4.5,-18.5) [draw, predproc, align=center,
-minimum width=\smbwd,
-minimum height=1cm] {RETTIFICA\\ LINEE};
-\node (decide3) at (0,-21.5) [draw, decision,
-minimum width=\smbwd,
-minimum height=1cm] {\scriptsize $ N_{r} + N_{c} = 0 $};
-\node (decidefitmin3) at (4.5,-21.5) [draw, decision,
-minimum width=\smbwd,
-minimum height=1cm] {$ F_m < 100 $};
-\node (mles1) at (9,-21.5) [draw, predproc, align=center,
-minimum width=\smbwd,
-minimum height=1cm] {$ \mu, \lambda - ES $};
-\node (mples1) at (4.5,-24.5) [draw, predproc, align=center,
-minimum width=\smbwd,
-minimum height=1cm] {$ \mu + \lambda - ES $};
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[keepaspectratio=true, height=\textheight]{flowchart}
+	\caption{Diagramma di flusso dell'algoritmo di Xie e Kang.}
+	\label{fig:flowchart}
+\end{figure}
 
 
-\coordinate (point1) at (5,-12);
-\draw[->] (terminal1) -- (predproc1);
-\draw[->] (predproc1) -- (calcola1);
-\draw[->] (decide1) -- (clona);
-\draw[->] (calcola1) -- (decide1);
-\draw[->] (decide1) -- node[above]{VERO} (end1);
-\draw[->] (decide2) -- node[above]{VERO} (permlin);
-\draw[->] (clona) -- (decide2);	
-\draw[->] (decide2) -- (permnum);	
-\draw[->] (permnum) -- (cercmag);	
-\draw[->] (cercmag) --node[left]{FALSO} (calcfitmin2);
-\draw[->] (cercmag) --node[above]{VERO} (end2);
-\draw[->] (permlin) -- (cercmag2);
-\draw[->] (cercmag2) --node[left] {FALSO} (calcfitmin1);	
-\draw[->] (cercmag2) --(point1) node[above]{VERO} -- (end2);
-\draw[->] (calcfitmin2) -- (decidefitmin2);	
-\draw[->] (calcfitmin1) -- (decidefitmin);
-\draw[->] (decidefitmin) -- node[above]{VERO} (recdiag);
-\draw[->] (decidefitmin2) -- node[above]{VERO} (reclin);
-\draw[->] (decidefitmin2) -- (decide3);
-\draw[->] (decide3) -- node[above]{VERO} (decidefitmin3);
-\draw[->] (decidefitmin3) -- node[above]{VERO} (mles1);
-\draw[->] (decidefitmin3) -- (mples1);
-\draw[->] (recdiag) -- (cercmag3);
-%\draw[->] (reclin) -- (decidefitmin);
-%	\draw[->] (decide1) -- (point1) -- (terminal2);
-
-
-\end{tikzpicture}
-}
 
 \end{document}
+
+
+%%% Local Variables:
+%%% ispell-local-dictionary: "italiano"
+%%% End:
