@@ -597,16 +597,16 @@ I fit sono realizzati con il metodo dei minimi quadrati.
   \centering
   \subfloat[Risultati con popolazione di 25 figli.]{
     \begin{tabular}{c|ccccc}
-      \hline
-      $ N $ & $ n_{tent} $ & $ n_{ok} $ &        $ \tau $        & $ \tau \slash \tau_0 $ & $ n_{gen} $ \\ \hline
-      3   &      10      &     10     & $ \SI{0.12}{\second} $ &           0            &      3      \\
-      10   &      10      &     10     &  $ \SI{55}{\second} $  &           1            &     178     \\
-      15   &      10      &     10     & $ \SI{5.75}{\minute} $ &           6            &     536     \\
-      20   &      10      &     10     & $ \SI{31.2}{\minute} $ &           33           &    1085     \\
-      25   &      10      &     10     &  $ \SI{1.73}{\hour} $  &          112           &    1893     \\
-      30   &      10      &     10     &  $ \SI{4.23}{\hour} $  &          275           &    3007     \\
-      35   &      10      &     10     & $ \SI{12.38}{\hour} $  &          824           &    4359     \\
-      40   &      10      &     10     &                        &           1            &  \\ \hline 
+    	\hline
+    	$ N $ & $ n_{tent} $ & $ n_{ok} $ &        $ \tau $        & $ \tau \slash \tau_0 $ & $ n_{gen} $ \\ \hline
+    	  3   &      10      &     10     & $ \SI{0.12}{\second} $ &           0            &      3      \\
+    	 10   &      10      &     10     &  $ \SI{55}{\second} $  &           1            &     178     \\
+    	 15   &      10      &     10     & $ \SI{5.75}{\minute} $ &           6            &     536     \\
+    	 20   &      10      &     10     & $ \SI{31.2}{\minute} $ &           33           &    1085     \\
+    	 25   &      10      &     10     &  $ \SI{1.73}{\hour} $  &          112           &    1893     \\
+    	 30   &      10      &     10     &  $ \SI{4.23}{\hour} $  &          275           &    3007     \\
+    	 35   &      10      &     10     & $ \SI{12.38}{\hour} $  &          824           &    4359     \\
+    	 40   &      10      &     10     & $ \SI{25.79}{\hour} $  &          1681          &    7087     \\ \hline
     \end{tabular} 
     \label{tab:risultati_xie_kang}		
   }
@@ -620,9 +620,9 @@ I fit sono realizzati con il metodo dei minimi quadrati.
     	 15   &      10      &     10     & $ \SI{4.37}{\minute} $ &           3            &    1109     \\
     	 20   &      10      &     10     & $ \SI{26.3}{\minute} $ &           22           &    2852     \\
     	 25   &      10      &     10     &  $ \SI{1.51}{\hour} $  &           78           &    4855     \\
-    	 30   &      10      &     10     &  $ \SI{3.97}{\hour} $  &          206           &  7949		  \\
-    	 35   &      10      &     10     &    $ \SI{}{\hour} $    &                        &  \\
-    	 40   &      10      &     10     &                        &                        &  \\ \hline
+    	 30   &      10      &     10     &  $ \SI{3.97}{\hour} $  &          206           &    7949     \\
+    	 35   &      10      &     10     &  $ \SI{8.63}{\hour} $  &          447           &    20725    \\
+    	 40   &      10      &     10     &           1            &                        &  \\ \hline
     \end{tabular} 
     \label{tab:risultati_xie_kang_10}
   }
@@ -658,7 +658,7 @@ I fit sono realizzati con il metodo dei minimi quadrati.
 		25 6229.42 1673.8868
 		30 15222.0 3930.1511
 		35 45535.3 13768.331
-		40 76630.5 12423.1
+		40 76630.5 22423.122
 	};
 	\addplot [only marks, mark=o, error bars/.cd,
 	y dir=both, y explicit]
@@ -669,7 +669,7 @@ I fit sono realizzati con il metodo dei minimi quadrati.
 		20 1578.77 542.591
 		25 5424.71 1484.1
 		30 14297.517 3034.074
-		35 29213.3  4534.3
+		35 31085.711  6122.3081
 	};
 	\addplot [blue, thick, smooth] table{
 		10 55.2336
@@ -679,7 +679,7 @@ I fit sono realizzati con il metodo dei minimi quadrati.
 	};
 	\addplot[red,domain=1:40,samples=100, thick] {0.0002157263137*x^(5.342445008)};
 	\addplot[green,domain=1:40,samples=100, thick]
-	{0.0005563654033*x^(4.978072046)};
+	{0.000463778412*x^(5.045827779)};
 	\node at (axis cs:32, 2000) [anchor=west, rotate = 22] {\small Xie Kang};
 	\node at (axis cs:36, 55000) [anchor=west, rotate = 72] {\small pop = 25};
 	\node at (axis cs:36, 25000) [anchor=west, rotate = 55] {\small pop = 10};
@@ -717,6 +717,7 @@ Le rettificazioni ad una coppia invece effettuano $ 2(N-1)N^2 \sim N^3 $ control
 	     \texttt{mutate}      &          $ \sim 0.7 $           \\
 	\texttt{rectifyDiagonals} &          $ \sim 7.7 $           \\
 	  \texttt{rectifyLines}   &           $ \sim 91 $           \\
+	 \verb|/   \| &   \verb|/ \| \\
 	 \begin{tabular}{c|c}
 	\texttt{onePair}  &   \texttt{twoPairs} 
 	\end{tabular} 	   		  & \begin{tabular}{c|c}
