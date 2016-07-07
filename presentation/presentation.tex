@@ -1,0 +1,752 @@
+\documentclass[10pt]{beamer}
+
+\usetheme[titleformat = smallcaps, block = fill]{metropolis}
+\usepackage{appendixnumberbeamer}
+
+\usepackage[italian]{babel}
+
+\usepackage{booktabs}
+\usepackage[scale=2]{ccicons}
+
+%\usepackage{pgfplots}
+%\usetikzlibrary{external}
+%\tikzexternalize
+%\tikzsetexternalprefix{images/}
+
+\usepackage{amsmath}
+
+\usepackage{animate}
+\usepackage{graphicx}
+\usepackage{xmpmulti}
+
+\usepackage{subfig}
+\usepackage{siunitx}
+\usepackage{pgfplots}
+\usepgfplotslibrary{units}
+\usepgfplotslibrary{dateplot}
+
+%Flowchart
+\usepackage{makeshape}
+\usepackage{flowchart}
+\usetikzlibrary{arrows}
+
+\usepackage{xspace}
+\newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
+
+\title{Studio di algoritmi stocastici per la costruzione di quadrati magici}
+\subtitle{Metodi Computazionali della Fisica}
+\date{\today}
+\author{Gabriele Bozzola \\ Matricola 882709}
+\institute{Università degli studi di Milano}
+% \titlegraphic{\hfill\includegraphics[height=1.5cm]{log	o.pdf}}
+
+\begin{document}
+
+	\maketitle
+
+\section{il problema}
+
+\begin{frame}[fragile]{quadrati magici}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.5\textwidth}
+
+    \begin{block}{Definizione}
+    	Un \alert{quadrato magico normale} $ N\times N $ è una matrice di ordine $ N $ contenente tutti i numeri naturali da 1 a $ N^2 $ tali che la somma di tutti gli elementi sulle righe, sulle colonne e sulle diagonali sia sempre la stessa, detta numero magico.
+    \end{block}
+
+	\column{0.5\textwidth}
+    \begin{figure}
+    	\centering
+%    	\tikzsetnextfilename{quadrato_magico}
+    	\begin{tikzpicture}[scale = 1]
+    	\node at (-1,0)  {};
+
+    	\draw (0,0) grid (3,3);
+
+    	\node at (1.5, 1.5) {\large 5};
+    	\node at (0.5, 0.5) {\large 2};
+    	\node at (1.5, 0.5) {\large 9};
+    	\node at (0.5, 2.5) {\large 6};
+    	\node at (0.5, 1.5) {\large 7};
+    	\node at (2.5, 2.5) {\large 8};
+    	\node at (1.5, 2.5) {\large 1};
+    	\node at (2.5, 0.5) {\large 4};
+    	\node at (2.5, 1.5) {\large 3};
+
+    	\draw[->, thick] (3.25, 2.5) -- (3.5, 2.5) node[right] {\large 15};
+    	\draw[->, thick] (3.25, 1.5) -- (3.5, 1.5) node[right] {\large 15};
+    	\draw[->, thick] (3.25, 0.5) -- (3.5, 0.5) node[right] {\large 15};
+    	\draw[->, thick] (0.5, -0.25) -- (0.5, -0.5) node[below] {\large 15};
+    	\draw[->, thick] (1.5, -0.25) -- (1.5, -0.5) node[below] {\large 15};
+    	\draw[->, thick] (2.5, -0.25) -- (2.5, -0.5) node[below] {\large 15};
+    	\draw[->, thick] (3.25, -0.25) --(3.5, -0.5);
+    	\node at (3.75, -0.75) {\large 15};
+    	\draw[->, thick] (-0.25, -0.25) --(-0.5, -0.5);
+    	\node at (-0.75, -0.75) {\large 15};
+    	\end{tikzpicture}
+    \end{figure}
+ \end{columns}
+\end{frame}
+
+\begin{frame}{quadrati magici -- proprietà}
+	\begin{alertblock}{Teorema di esistenza}
+		$ \forall N \in \mathbb{N} - \{2\} $ è sempre possibile costruire almeno un quadrato magico normale.
+	\end{alertblock}
+
+	\begin{alertblock}{Formula per la costante magica}
+		$ \forall N \in \mathbb{N} - \{2\} $ la costante magica $ \mathit{m} $ di un quadrato di ordine $ N $ è:
+		\begin{equation*}\label{equa:costante_magica}
+		 \mathit{m.v.} = \frac{1}{2} N (N^2 + 1)
+		\end{equation*}
+	\end{alertblock}
+\end{frame}
+
+
+\setbeamertemplate{numero}{Dati ottenuti con metodi statistici da Trump W.}
+\begin{frame}{quadrati magici -- numero}
+	\begin{columns}
+
+		\column{0.33\textwidth}
+	\begin{block}{Numero di quadrati magici di ordine $ N $}
+		Il numero di quadrati magici è noto con precisione solo per $ N<6 $. \\
+		La percentuale sul totale dei possibili quadrati tende a zero per $ N $ che tende a $ +\infty $.
+	\end{block}
+
+		\column{0.66\textwidth}
+		\begin{tabular}{cccc} \toprule
+			$ N $ &       $ N_{ms} $        &       $ N_{ns} $        &  $ \si{\percent} $   \\ \midrule
+			2   &            0            &    $ \sim  10^{1} $     &          0           \\
+			3   &            1            &     $ \sim 10^{5} $     &   $ \sim 10^{-5} $   \\
+			4   &           880           &    $ \sim 10^{12} $     &   $ \sim 10^{-7} $   \\
+			5   &       275 305 224       &    $ \sim 10^{24} $     &  $ \sim 10^{-18} $   \\
+			6   &    $ \sim 10^{19} $     &    $ \sim 10^{41} $     &  $ \sim 10^{-22} $   \\
+			20   &    $ \sim 10^{744} $    &    $ \sim 10^{868} $    &  $ \sim 10^{-124} $  \\
+			35   &   $ \sim 10^{2992} $    &   $ \sim 10^{3252} $    &  $ \sim 10^{-250} $  \\
+			50   &   $ \sim 10^{7000} $    &   $ \sim 10^{7410} $    &  $ \sim 10^{-410} $\\ \bottomrule
+			%	10000 & $ \sim 10^{756373366} $ & $ \sim 10^{756570555} $ & $ \sim 10^{-197189} $ \\
+		\end{tabular}
+	\end{columns}
+	\centering
+	Trovare quadrati magici è \alert{difficile}.\footnote{Dati ottenuti con metodi statistici da Trump W. e con errore inferiore a $ \SI{1}{\percent} $.}
+\end{frame}
+
+\begin{frame}{quadrati magici - metodi di costruzione deterministici}
+
+	\begin{columns}[T,onlytextwidth]
+
+	\column{0.5\textwidth}
+
+	\begin{itemize}
+		\item Per quadrati di ordine dispari: metodo de la Loumbre, metodo di Conway, metodo Pheru, \dots
+		\item Per quadrati pari: metodo Medjing, \dots
+		\item Per quadrati singolarmente pari ($ N $ è multiplo di quattro): metodo LUX, metodo Strachey, \dots
+	\end{itemize}
+
+	\column{0.5\textwidth}
+
+%	    	\transduration<0-95>{0}
+%	    	\multiinclude[<+->][format=png, graphics={width=\textwidth}]{siamesegif/SiameseMethod}
+
+%	\animategraphics[loop,controls,width=\columnwidth]{8}{siamesegif/SiameseMethod-}{0}{95}
+
+	\end{columns}
+
+\end{frame}
+
+\begin{frame}{quadrati magici - problemi di questi metodi}
+  \begin{itemize}
+  	\item Costruiscono sempre il medesimo quadrato
+  	\item Non sono generalizzabili ad altri tipi di quadratici magici
+%  	\item And now this
+  \end{itemize}
+  \centering
+  I metodi stocastici risolvono questi problemi.
+\end{frame}
+
+\section{algoritmi genetici}
+
+\begin{frame}{algoritmo genetico - funzionamento}
+
+	\begin{columns}[T,onlytextwidth]
+
+	\column{0.5\textwidth}
+    \begin{block}{}
+    	\parbox{0.98\columnwidth}{
+    		Gli algoritmi genetici implementano il principio darwiniano di \alert{sopravvivenza del più adatto}.
+
+    		Gli individui:
+    		\begin{itemize}
+    			\item sono possibili soluzioni del problema.
+    			\item sono classificati in base alla loro \alert{fitness}, che quantifica quanto si avvicinano alla soluzione reale.
+    			\item si riproducono in maniera sessuata (\alert{crossover}).
+    			\item possono subire \alert{mutazioni}.
+    		\end{itemize}
+
+    	}
+    \end{block}
+
+    \column{0.5\textwidth}
+	\begin{figure}[htbp]
+		\centering
+		\resizebox*{!}{1.25\columnwidth}{
+		\begin{tikzpicture}
+		\def\smbwd{0.7\columnwidth}
+		\node (start) at (0,0) [draw, terminal,
+		minimum width=\smbwd] {INIZIO};
+		\node (generapop) at (0, -1) [draw, process,
+		minimum width=\smbwd] {GENERA POPOLAZIONE};
+		\node (selgen) at (0, -2) [draw, process,
+		minimum width=\smbwd] {SELEZIONA GENITORI};
+		\node (crossover) at (0, -3) [draw, process,
+		minimum width=\smbwd] {CROSSOVER};
+		\node (muta) at (0, -4) [draw, process,
+		minimum width=\smbwd] {MUTA};
+		\node (trovato) at (0,-6) [draw, decision,
+		] {TROVATO?};
+		\node (end) at (0,-8) [draw, terminal,
+		minimum width=\smbwd] {FINE};
+
+		\draw[->] (start) -- (generapop);
+		\draw[->] (generapop) -- (selgen);
+		\draw[->] (selgen) -- (crossover);
+		\draw[->] (crossover) -- (muta);
+		\draw[->] (muta) -- (trovato);
+		\draw[->] (trovato) --node[left]{SI} (end);
+		\draw[->] (trovato) --node[above]{NO} (-2.75, -6)
+		-- (-2.75, -1.5) -- (0, -1.5);
+		\end{tikzpicture}
+	}
+	\end{figure}
+
+\end{columns}
+\end{frame}
+
+\begin{frame}{algoritmo genetico -- perché è adatto?}
+	Perché il problema della costruzione dei quadrati magici è un buon problema da affrontare con gli algoritmi genetici?
+	\begin{itemize}
+		\item Lo spazio delle soluzioni è estremamente vasto.
+		\item I quadrati possono essere codificati in modo diretto come individui.
+		\item Il problema può essere formulato come ottimizzazione di una funzione di fitness.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{algoritmo genetico -- implementazione}
+	Per implementare un algoritmo genetico bisogna a pensare a:
+	\begin{itemize}
+		\item Che funzione di fitness utilizzare?
+		\item Come far selezionare i genitori?
+		\item Come far riprodurre i quadrati?
+		\item Come mutarli?
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{algoritmo genetico -- fitness}
+	\begin{block}{Funzioni di fitness implementate}
+	\parbox{0.98\columnwidth}{
+		\begin{itemize}
+		\item \texttt{totalSquared}: somma dei quadrati delle discrepanze delle somme di ogni linea dal valore magico.
+		\item \texttt{totalAbs}: somma dei moduli delle discrepanze delle somme di ogni linea dal valore magico.
+		\item \texttt{correctLines}: numero di linee magiche
+		\end{itemize}
+	}
+	\end{block}
+\end{frame}
+
+\begin{frame}{algoritmo genetico -- metodi di selezione}
+	\begin{block}{Metodi di selezione implementati}
+	\parbox{0.98\columnwidth}{
+	\begin{itemize}
+		\item \texttt{fitnessProportionate}: probabilità di selezione proporzionale alla fitness.
+		\item \texttt{similarSquare}: probabilità di selezione dipendente dalla fitness e dalla distanza dal quadrato migliore.
+		\item \texttt{fittests}: alcuni individui non si riproducono, gli altri hanno uguale probabilità di selezione.
+		\item \texttt{elitism}: alcuni individui passano direttamente alla generazione successiva, i restanti vengono selezionati secondo uno dei precedenti metodi.
+	\end{itemize}
+	}
+	\end{block}
+\end{frame}
+
+\begin{frame}{algoritmo genetico -- metodi di riproduzione}
+
+	\begin{columns}[T,onlytextwidth]
+
+	\column{0.47\textwidth}
+
+	\begin{block}{Metodi di crossover}
+		\parbox{0.98\columnwidth}{
+		Crossover a uno o due punti verticale o orizzontale. \\
+		Se il crossover produce numeri doppi questi vengono sistemati \alert{casualmente}.
+		}
+	\end{block}
+
+	\begin{block}{Metodi di mutazione}
+		\parbox{0.98\columnwidth}{
+			\begin{itemize}
+				\item Scambio di una coppia.
+				\item Scambio di due colonne.
+				\item Scambio di due righe.
+				\item Permutazione di una riga.
+				\item Permutazione di una colonna.
+			\end{itemize}
+		}
+	\end{block}
+	\column{0.5\textwidth}
+	\vspace*{-15pt}
+	\begin{figure}[!htbp]
+		\centering
+		\subfloat[Crossover orizzontale]{
+			\begin{tikzpicture}[scale = 0.75]
+			\draw (0,0) grid (3,3);
+			\draw
+			(0,1)[ultra thick] to (2,1)
+			(2,1)[ultra thick] to (2,2)
+			(2,2)[ultra thick] to (3,2);
+
+			\draw[fill = gray, opacity = 0.30] (0,2) rectangle (3,3);
+			\draw[fill = gray, opacity = 0.30] (0,1) rectangle (2,2);
+
+			\node at (1.5, 1.5) {X};
+                      \end{tikzpicture}
+                    }\quad
+                    \subfloat[Crossover verticale]{
+                      \begin{tikzpicture}[scale = 0.75]
+			\draw (0,0) grid (3,3);
+			\draw
+			(1,0)[ultra thick] to (1,1)
+			(1,1)[ultra thick] to (2,1)
+			(2,1)[ultra thick] to (2,3);
+
+			\draw[fill = gray, opacity = 0.30] (0,0) rectangle (1,3);
+			\draw[fill = gray, opacity = 0.30] (1,1) rectangle (2,3);
+
+			\node at (1.5, 1.5) {X};
+                      \end{tikzpicture}
+                    }
+                  \end{figure}
+                  \begin{figure}[!htbp]
+                    \centering
+                    \subfloat[Crossover a due punti orizzontale]{
+                      \begin{tikzpicture}[scale = 0.75]
+			\draw (0,0) grid (3,3);
+			\draw
+			(0,1)[ultra thick] to (3,1)
+			(0,2)[ultra thick] to (3,2);
+
+			\draw[fill = gray, opacity = 0.30] (0,1) rectangle (3,2);
+
+			\node at (0.5, 1.5) {X};
+			\node at (2.5, 1.5) {X};
+            \end{tikzpicture}
+            }\quad
+            \subfloat[Crossover a due punti verticale]{
+            \begin{tikzpicture}[scale = 0.75]
+               \draw (0,0) grid (3,3);
+            \draw
+                        (0,2)[ultra thick] to (1,2)
+                        (1,2)[ultra thick] to (1,3)
+                        (2,1)[ultra thick] to (2,0)
+                        (2,1)[ultra thick] to (3,1);
+
+            \draw[fill = gray, opacity = 0.30] (1,0) rectangle (2,3);
+            \draw[fill = gray, opacity = 0.30] (0,0) rectangle (1,2);
+            \draw[fill = gray, opacity = 0.30] (3,3) rectangle (2,1);
+
+			\node at (0.5, 1.5) {X};
+			\node at (2.5, 1.5) {X};
+            \end{tikzpicture}
+		   }
+           \end{figure}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{algoritmo genetico -- risultati}
+%		\parbox{0.98\columnwidth}{
+			\alert{Nessuna} combinazione di fitness e metodi di selezione e crossover è riuscita a costruire quadrati di dimensioni superiori a $ 3\times3 $!
+			\\ \hfill \\
+			Motivo: lo spazio delle soluzioni non è \alert{connesso} rispetto a nessuna funzione di fitness.
+%		}
+\end{frame}
+
+\begin{frame}{algoritmo genetico -- possibili miglioramenti}
+	%		\parbox{0.98\columnwidth}{
+	\begin{itemize}
+		\item I crossover sono dannosi per giungere ad una soluzione. Non si possono eliminare?
+		\item Non si può \emph{aiutare} l'algoritmo a convergere sbloccandolo nei momenti di stallo?
+	\end{itemize}
+	%		}
+\end{frame}
+
+\section{algoritmo evolutivo}
+
+\begin{frame}{algoritmo evolutivo - funzionamento}
+
+	\begin{columns}[onlytextwidth]
+
+	\column{0.5\textwidth}
+	\begin{block}{}
+		\parbox{0.95\columnwidth}{
+			Gli algoritmi evolutivi sono particolari algoritmi genetici in cui:
+			\begin{itemize}
+				\item Non ci sono crossover.
+				\item Le mutazioni sono molto più sofisticate.
+				\item Sostanzialmente si lavora con un solo individuo.
+			\end{itemize}
+		}
+	\end{block}
+
+		\column{0.5\textwidth}
+		\begin{figure}[htbp]
+			\centering
+			\resizebox*{!}{1.25\columnwidth}{
+				\begin{tikzpicture}
+				\def\smbwd{0.8\columnwidth}
+				\node (start) at (0,0) [draw, terminal,
+				minimum width=\smbwd] {INIZIO};
+				\node (generapop) at (0, -1) [draw, process,
+				minimum width=\smbwd] {GENERA PADRE};
+				\node (selgen) at (0, -2) [draw, process,
+				minimum width=\smbwd] {CLONA INDIVIDUO};
+				\node (crossover) at (0, -3) [draw, process,
+				minimum width=\smbwd] {MUTA POPOLAZIONE};						\node (muta) at (0, -4) [draw, process,
+				minimum width=\smbwd] {SELEZIONA NUOVO PADRE};
+				\node (trovato) at (0,-6) [draw, decision,
+				] {MAGICO?};
+				\node (end) at (0,-8) [draw, terminal,
+				minimum width=\smbwd] {FINE};
+
+				\draw[->] (start) -- (generapop);
+				\draw[->] (generapop) -- (selgen);
+				\draw[->] (selgen) -- (crossover);
+				\draw[->] (crossover) -- (muta);
+				\draw[->] (muta) -- (trovato);
+				\draw[->] (trovato) --node[left]{SI} (end);
+				\draw[->] (trovato) --node[above]{NO} (-2.75, -6)
+				-- (-2.75, -1.5) -- (0, -1.5);
+				\end{tikzpicture}
+			}
+		\end{figure}
+
+	\end{columns}
+\end{frame}
+
+\begin{frame}{algoritmo di Xie e Kang}
+%		\begin{block}{}
+			\parbox{0.98\columnwidth}{
+			L'algoritmo di Xie e Kang è un algoritmo evolutivo per la costruzione di quadrati magici normali con:
+			\begin{itemize}
+				\item Mutazioni dinamiche e adattive
+				\item Rettificazioni locali
+				\item Congettura della costruzione a due fasi
+			\end{itemize}
+		}
+%		\end{block}
+
+		\begin{alertblock}{Congettura della costruzione a due fasi}
+		\parbox{0.98\columnwidth}{
+Un quadrato semimagico è sempre completabile ad un quadrato magico utilizzando un numero finito di permutazioni di righe e di colonne oppure di rettificazioni locali.
+		}
+		\end{alertblock}
+\end{frame}
+
+\begin{frame}{algoritmo di Xie e Kang -- codifica dell'individuo}
+    \begin{block}{Individuo}
+    	\parbox{0.98\columnwidth}{
+	    	Un individuo è una coppia di matrici $ (M,\Sigma) $, la prima è il quadrato da rendere magico, la seconda contiene informazioni necessarie per le mutazioni.
+    	}
+    \end{block}	
+     \begin{block}{Fitness}
+     	\parbox{0.98\columnwidth}{
+			\[ f(M) = 
+			\begin{cases}
+			\sum_{i = 1}^{N}\left(\text{row}(i) + \text{col}(i) \right) & \text{solo diagonali non magiche} \\
+			- \left(\text{dg1} + \text{dg2} \right) & \text{altrimenti} 
+			\end{cases}
+			\]
+		Dove col$ (i) $ e row$ (j) $ sono rispettivamente la somma degli elementi sulla $ i- $esima colonna e $ j- $esima riga di $ M $, e dg1 e dg2 sono la somma degli elementi sulla diagonale e sull'antidiagonale di $ M $.
+     	}
+     \end{block}	
+\end{frame}
+
+\begin{frame}{algoritmo di Xie e Kang -- mutazioni}
+
+%  \begin{columns}[onlytextwidth]
+
+%    \column{0.5\textwidth}
+
+    \begin{block}{Mutazioni}
+      \parbox{0.98\columnwidth}{
+        \begin{itemize}
+        \item Dinamiche: la probabilità di mutazione non è fissa, ma dipende dal numero di linee non magiche.
+        \item Adattive: le mutazioni dipendono da quanto il quadrato non è magico.
+        \end{itemize}
+      }
+    \end{block}
+    
+    \begin{block}{Mutazioni}
+    	\parbox{0.98\columnwidth}{
+    		\begin{itemize}
+    			\item \alert{Mutazioni puntuali} per quadrati generici.
+    			\item \alert{Mutazioni lineari} per quadrati che hanno solo le diagonali non magiche (\alert{quadrati semimagici}).
+    		\end{itemize}
+    	}
+    \end{block}   
+     
+%    \column{0.5\textwidth}
+
+%  \end{columns}
+\end{frame}
+
+\begin{frame}{algoritmo di Xie e Kang -- mutazioni puntuali I}
+	
+%	\begin{columns}[onlytextwidth]
+		
+%		\column{0.45\textwidth}
+		
+    \begin{block}{Insiemi di mutazione}
+    	\parbox{0.98\columnwidth}{
+    		\begin{itemize}
+    			\item $ S_1 $ numeri la cui riga e colonna non è magica.
+    			\item $ S_2 $ numeri in righe o colonne non magiche.
+    		\end{itemize}
+    	}
+    \end{block} 
+    
+%        \column{0.5\textwidth}
+        
+    \begin{block}{Mutazioni}
+    	\parbox{0.98\columnwidth}{
+    		Siano $ n_{col} $ e $ n_{row} $ il numero di colonne e di righe non magiche. Le mutazione sono scambi di numeri tra:
+    		\begin{itemize}
+    			\item $ S_1 $ e $ S_2 $ con probabilità $ 1/(n_{row}n_{col}) $.
+    			\item $ S_2 $ e $ S_2 $ con probabilità $ P_M $.
+    			\item $ S_2 $ e $ M $ con probabilità $ P_M $.
+    		\end{itemize}
+    		dove 
+    		\vspace*{-15pt}
+    		\[ 
+    		P_M(x) = 
+    		\begin{cases}
+    		1\slash n_{row} & \text{se} \quad x \text{ è in una riga non magica} \\
+    		1\slash n_{col} & \text{se} \quad x \text{ è in una colonna non magica} \\
+    		1\slash \left(n_{row} n_{col} \right) & \text{se} \quad x \text{ è in entrambe} \\
+    		\end{cases}
+    		\]
+    	}
+    \end{block} 
+    
+%\end{columns}
+
+\end{frame}
+
+\begin{frame}{algoritmo di Xie e Kang -- mutazioni puntuali II}
+
+    \begin{block}{Esempio: $ S_1 $ in $ S_2 $ }
+    	\parbox{0.98\columnwidth}{
+    		Siano $ m_{ij} \in M $ e $ \sigma_{ij} \in \Sigma $
+    		\begin{enumerate}
+    			\item Calcolo $ new =  m_{ij}   + \text{randint}(-\sigma_{ij}, \sigma_{ij})  $
+    			\item Aggiusto se è invalido:
+    			\[
+    			\begin{cases}
+    			new = \text{randint}(1,N) & \text{se} \quad new < 1  \\
+    			new = N^2 - \text{randint}(0,N) & \text{se} \quad new > N^2  
+    			\end{cases}
+    			\]
+    			\item Cerco l'elemento in $ S_2 $ che più si avvicina a $ new $ cioè $ t \in  S_2  $ tale che soddisfi $ \min_{t \in S_2} \lvert new - t \rvert $.
+    			\item Scambio $ t $ e $ new $ in $ M $.	
+    		\end{enumerate}
+    	}
+    \end{block} 
+\end{frame}
+
+\begin{frame}{algoritmo di Xie e Kang -- mutazioni puntuali III}
+	
+	\begin{block}{Esempio: $ S_1 $ in $ S_2 $ }
+		\parbox{0.98\columnwidth}{
+			\begin{enumerate}
+				\setcounter{enumi}{4}
+				\item Calcolo $ z =  \sigma_{ij}   + \text{randint}(-1,1)  $
+				\item Aggiusto se è invalido:
+\[
+z = \text{randint}(1,\sigma_t) \quad \text{se} \quad z < 1 \quad \text{o} \quad  z > \sigma_t 
+\]
+				con:
+				\[ \sigma_t = 
+				\begin{cases}
+				\lvert f(M) \rvert \slash \left(n_{row} + n_{col}\right) & \text{se} \quad n_{row}n_{col} \not = 0  \\
+				\lvert f(M) \rvert \slash n_{diag} & \text{se} \quad n_{row}n_{col} = 0 
+				\end{cases}
+				\]
+				$ \sigma_t $ piccola: quadrato quasi magico
+				\item Sostituisco a $ \sigma_{ij} $ in $ \Sigma $ il valore $ z $.
+			\end{enumerate}
+		}
+	\end{block} 
+	
+\end{frame}
+
+\begin{frame}{algoritmo di Xie e Kang -- mutazioni lineari}
+	\begin{block}{Mutazioni lineari}
+		\parbox{0.97\columnwidth}{
+			 Sono permutazioni casuali di una linea di un quadrato semimagico.
+			 \begin{enumerate}
+				\item Seleziono un numero $ q $ intero da 1 a $ N $.
+				\item Per $ q $ volte estraggo una linea.
+				\item La sostituisco con una permutazione casuale dei suoi elementi.
+			\end{enumerate}
+			
+			La linea rimane magica.
+		}
+	\end{block}
+\end{frame}
+
+\begin{frame}{algoritmo di Xie e Kang -- rettificazioni locali}
+	\begin{block}{Rettificazioni locali}
+		\parbox{0.98\columnwidth}{
+			L'algoritmo potrebbe rimanere in una fase di stallo, per questo conviene operare con approcci sistematici:
+			\begin{itemize}
+				\item \alert{Rettificazioni lineari}: cercano di aumentare il numero di linee magiche.
+				\item \alert{Rettificazioni diagonali}: cercano di rendere le diagonali di un quadrato semimagico magiche.
+			\end{itemize}
+			Le rettificazioni sono ottenute analizzando tutto il quadrato in cerca di tutte le coppie o i quartetti tali che una loro permutazione migliori il quadrato. 
+		}
+	\end{block}
+\end{frame}
+
+\begin{frame}{algoritmo di Xie e Kang -- rettificazioni locali lineari}
+			
+	  \begin{columns}[onlytextwidth]
+
+	    \column{0.5\textwidth}		
+		
+		\begin{block}{Esempio di rettificazione locale lineare}
+		\parbox{0.98\columnwidth}{
+		Due numeri $ m_{ks} $ e $ m_{ls} $ sono scambiati alla riga $ k $ e $ l $ e alla colonna $ s $ se sono soddisfatte: 
+		\begin{itemize}
+			\item $ \text{row}(k) - \mathit{m.v.} = m_{ks} - m_{ls} $
+			\item $ \mathit{m.v.} - \text{row}(l) = m_{ks} - m_{ls} $
+		\end{itemize}
+		con $ m.v. $ costante magica.
+		}
+		\end{block}
+		
+		\column{0.5\textwidth}
+		
+		\begin{figure}[htbp]
+			\centering
+			\subfloat[Prima]{
+				\begin{tikzpicture}[scale = 0.75]
+				\draw (0,0) grid (3,3);
+				\node at (1.5, 1.5) {\large 3};
+				\node at (0.5, 0.5) {\large 2};
+				\node at (1.5, 0.5) {\large 7};
+				\node at (0.5, 2.5) {\large 1};
+				\node at (0.5, 1.5) {\large 4};
+				\node at (2.5, 2.5) {\large 6};
+				\node at (1.5, 2.5) {\large 5};
+				\node at (2.5, 0.5) {\large 9};
+				\node at (2.5, 1.5) {\large 8};
+				\end{tikzpicture}		
+			}
+			
+			\subfloat[Dopo]{
+				
+				\begin{tikzpicture}[scale = 0.75]
+				\draw (0,0) grid (3,3);
+				
+				\draw[fill = gray, opacity = 0.2]
+				(2,2) rectangle (3,3);	
+				
+				\draw[fill = gray, opacity = 0.2]
+				(2,1) rectangle (3,0);	
+				
+				\node at (1.5, 1.5) {\large 3};
+				\node at (0.5, 0.5) {\large 2};
+				\node at (1.5, 0.5) {\large 7};
+				\node at (0.5, 2.5) {\large 1};
+				\node at (0.5, 1.5) {\large 4};
+				\node at (2.5, 2.5) {\large \textbf{9}};
+				\node at (1.5, 2.5) {\large 5};
+				\node at (2.5, 0.5) {\large \textbf{6}};
+				\node at (2.5, 1.5) {\large 8};
+				\end{tikzpicture}			
+			}
+			
+		\end{figure}
+		
+	\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{algoritmo di Xie e Kang -- tempi di esecuzione}
+
+\begin{figure}[htbp]
+	\centering
+	\begin{tikzpicture}
+	\begin{axis}[
+	axis lines=left, enlarge x limits=true,
+	mlineplot,
+	%	xtick={10,15,20,25,30},
+	xtick = data,
+	scaled y ticks=base 10:-3,
+	ymin=0,
+	xmin=7.5,
+	title = Tempo di esecuzione vs ordine,  
+	xlabel = Ordine,
+	ylabel = Tempo di esecuzione,
+	grid=major,
+	grid style={dashed,gray!30},	
+	y unit=\si{\second},
+	width=.75\columnwidth,
+	title style={yshift=1.5ex},
+	]
+	\addplot [only marks, error bars/.cd,
+	y dir=both, y explicit]
+	table[x=x, y=y, y error=error]{
+		x  y	    error
+		10 55.2336 10.385984
+		15 345.519 131.58943
+		20 1873.96 629.16364
+		25 6229.42 1673.8868
+		30 15222.0 3930.1511
+		35 45535.3 13768.331
+		40 76630.5 22423.122
+	};
+	\addplot [only marks, mark=o, error bars/.cd,
+	y dir=both, y explicit]
+	table[x=x, y=y, y error=error]{
+		x  y	    error
+		10 69.3912 16.0766
+		15 262.52  38.9824
+		20 1578.77 542.591
+		25 5424.71 1484.1
+		30 14297.517 3034.074
+		35 31085.711  6122.3081
+		40 56637.936  11245.582
+	};
+	\addplot [blue, thick, smooth] table{
+		10 55.2336
+		20 1100
+		30 4442
+		40 16060
+	};
+	\addplot[red,domain=1:40,samples=100, thick] {0.0002202440975*x^(5.334925044)};
+	\addplot[green,domain=1:40,samples=100, thick]
+	{0.000463778412*x^(5.045827779)};
+	\node at (axis cs:32, 1500) [anchor=west, rotate = 20] {\small Xie Kang};
+	\node at (axis cs:36, 55000) [anchor=west, rotate = 65] {\small pop = 25};
+	\node at (axis cs:36, 25000) [anchor=west, rotate = 53] {\small pop = 10};
+	\end{axis}
+	\end{tikzpicture}
+\end{figure}
+\end{frame}
+
+\section{conclusioni e sviluppi futuri}
+
+\begin{frame}{conclusioni e sviluppi futuri}
+
+\end{frame}
+
+\begin{frame}[standout]
+	GRAZIE PER L'ATTENZIONE!
+\end{frame}
+
+\end{document}

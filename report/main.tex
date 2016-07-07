@@ -280,7 +280,7 @@ Qualora sia in uso la fitness \texttt{correctLines} si utilizza invece un altro 
 
 \begin{figure}[!htbp]
 	\centering
-	\subfloat[Crossover orizziontale]{
+	\subfloat[Crossover orizzontale]{
 		\begin{tikzpicture}[scale = 1]
 		\draw (0,0) grid (3,3);
 		\draw 
@@ -314,7 +314,6 @@ Qualora sia in uso la fitness \texttt{correctLines} si utilizza invece un altro 
 
 \noindent
 Siccome si vogliono costruire quadrati magici normali è necessario che tutti i numeri siano distinti, per questo motivo i crossover possono produrre degli individui non validi. Qualora questo succeda i quadrati vengono aggiustati eliminando i numeri doppi e sostituendoli con valori accettabili estratti casualmente.
-
 
 \subsection{Implementazione in Mathematica}
 
@@ -405,8 +404,8 @@ Dove con $ -k $ si intende l'indice $ N-k+1 $, che è il $ k $-esimo elemento de
 Con queste notazioni la funzione di fitness può essere comodamente riscritta come:
 \[ f(M) = 
 \begin{cases}
-\sum_{i = 1}^{N}\left(\text{row}(i) + \text{col}(i) \right) & \text{semimagico} \\
-- \left(\text{dg1} + \text{dg2} \right) & \text{altrimenti} 
+- \left(\text{dg1} + \text{dg2} \right) & \text{semimagico} \\
+\sum_{i = 1}^{N}\left(\text{row}(i) + \text{col}(i) \right) & \text{altrimenti} 
 \end{cases}
 \]
 Si è scelto di utilizzare una fitness negativa per i quadrati semimagici in modo che ogni quadrato semimagico sia evolutivamente preferito a tutti i quadrati che hanno ancora linee non magiche. Questo accorgimento permette di trovare sempre l'individuo migliore di una popolazione anche se questa è composta da quadrati generici cercando l'individuo che ha fitness negativa più vicina a zero.   
