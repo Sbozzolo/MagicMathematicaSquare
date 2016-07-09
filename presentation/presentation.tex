@@ -8,6 +8,8 @@
 \usepackage{booktabs}
 \usepackage[scale=2]{ccicons}
 
+%\usepackage{pgf-pie}
+
 %\usepackage{pgfplots}
 %\usetikzlibrary{external}
 %\tikzexternalize
@@ -15,10 +17,25 @@
 
 \usepackage{amsmath}
 
+%Animazioni
 \usepackage{animate}
 \usepackage{graphicx}
 \usepackage{xmpmulti}
 
+%Togliere tablella
+\usepackage{caption}
+
+%Overlay colorato
+\usepackage{colortbl}
+
+%Codice di Mathematica
+\usepackage{listings}
+
+%Per colorare i commenti di LateX
+\lstset{escapeinside={<@}{@>}}
+
+
+%Grafici
 \usepackage{subfig}
 \usepackage{siunitx}
 \usepackage{pgfplots}
@@ -32,6 +49,24 @@
 
 \usepackage{xspace}
 \newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
+
+%Per diminuire l'indentazione di itemize
+\newlength\origleftmargini
+\setlength\origleftmargini\leftmargini
+\setbeamertemplate{itemize/enumerate body begin}{\setlength{\leftmargini}{7.5pt}}
+
+\let\oldblock\block
+\let\oldendblock\endblock
+\def\block{\begingroup \setbeamertemplate{itemize/enumerate body begin}{\setlength{\leftmargini}{10pt}} \oldblock}
+\def\endblock{\oldendblock \endgroup}
+
+\let\oldalertblock\alertblock
+\let\oldendalertblock\endalertblock
+\def\alertblock{\begingroup \setbeamertemplate{itemize/enumerate body begin}{\setlength{\leftmargini}{10pt}} \oldalertblock}
+\def\endalertblock{\oldendalertblock \endgroup}
+
+\renewcommand*{\thefootnote}{\fnsymbol{footnote}}
+
 
 \title{Studio di algoritmi stocastici per la costruzione di quadrati magici}
 \subtitle{Metodi Computazionali della Fisica}
@@ -157,7 +192,6 @@
   \begin{itemize}
   	\item Costruiscono sempre il medesimo quadrato
   	\item Non sono generalizzabili ad altri tipi di quadratici magici
-%  	\item And now this
   \end{itemize}
   \centering
   I metodi stocastici risolvono questi problemi.
@@ -176,10 +210,10 @@
 
     		Gli individui:
     		\begin{itemize}
-    			\item sono possibili soluzioni del problema.
-    			\item sono classificati in base alla loro \alert{fitness}, che quantifica quanto si avvicinano alla soluzione reale.
-    			\item si riproducono in maniera sessuata (\alert{crossover}).
-    			\item possono subire \alert{mutazioni}.
+    			\item sono possibili soluzioni del problema
+    			\item sono classificati in base alla loro \alert{fitness}, che quantifica quanto si avvicinano alla soluzione reale
+    			\item si riproducono in maniera sessuata (\alert{crossover})
+    			\item possono subire \alert{mutazioni}
     		\end{itemize}
 
     	}
@@ -224,9 +258,9 @@
 \begin{frame}{algoritmo genetico -- perché è adatto?}
 	Perché il problema della costruzione dei quadrati magici è un buon problema da affrontare con gli algoritmi genetici?
 	\begin{itemize}
-		\item Lo spazio delle soluzioni è estremamente vasto.
-		\item I quadrati possono essere codificati in modo diretto come individui.
-		\item Il problema può essere formulato come ottimizzazione di una funzione di fitness.
+		\item Lo spazio delle soluzioni è estremamente vasto
+		\item I quadrati possono essere codificati in modo diretto come individui
+		\item Il problema può essere formulato come ottimizzazione di una funzione di fitness
 	\end{itemize}
 \end{frame}
 
@@ -244,8 +278,8 @@
 	\begin{block}{Funzioni di fitness implementate}
 	\parbox{0.98\columnwidth}{
 		\begin{itemize}
-		\item \texttt{totalSquared}: somma dei quadrati delle discrepanze delle somme di ogni linea dal valore magico.
-		\item \texttt{totalAbs}: somma dei moduli delle discrepanze delle somme di ogni linea dal valore magico.
+		\item \texttt{totalSquared}: somma dei quadrati delle discrepanze delle somme di ogni linea dal valore magico
+		\item \texttt{totalAbs}: somma dei moduli delle discrepanze delle somme di ogni linea dal valore magico
 		\item \texttt{correctLines}: numero di linee magiche
 		\end{itemize}
 	}
@@ -256,10 +290,10 @@
 	\begin{block}{Metodi di selezione implementati}
 	\parbox{0.98\columnwidth}{
 	\begin{itemize}
-		\item \texttt{fitnessProportionate}: probabilità di selezione proporzionale alla fitness.
-		\item \texttt{similarSquare}: probabilità di selezione dipendente dalla fitness e dalla distanza dal quadrato migliore.
-		\item \texttt{fittests}: alcuni individui non si riproducono, gli altri hanno uguale probabilità di selezione.
-		\item \texttt{elitism}: alcuni individui passano direttamente alla generazione successiva, i restanti vengono selezionati secondo uno dei precedenti metodi.
+		\item \texttt{fitnessProportionate}: probabilità di selezione proporzionale alla fitness
+		\item \texttt{similarSquare}: probabilità di selezione dipendente dalla fitness e dalla distanza dal quadrato migliore
+		\item \texttt{fittests}: alcuni individui non si riproducono, gli altri hanno uguale probabilità di selezione
+		\item \texttt{elitism}: alcuni individui passano direttamente alla generazione successiva, i restanti vengono selezionati secondo uno dei precedenti metodi
 	\end{itemize}
 	}
 	\end{block}
@@ -272,20 +306,20 @@
 	\column{0.47\textwidth}
 
 	\begin{block}{Metodi di crossover}
-		\parbox{0.98\columnwidth}{
+		\parbox{0.96\columnwidth}{
 		Crossover a uno o due punti verticale o orizzontale. \\
 		Se il crossover produce numeri doppi questi vengono sistemati \alert{casualmente}.
 		}
 	\end{block}
 
 	\begin{block}{Metodi di mutazione}
-		\parbox{0.98\columnwidth}{
+		\parbox{0.96\columnwidth}{
 			\begin{itemize}
-				\item Scambio di una coppia.
-				\item Scambio di due colonne.
-				\item Scambio di due righe.
-				\item Permutazione di una riga.
-				\item Permutazione di una colonna.
+				\item Scambio di una coppia
+				\item Scambio di due colonne
+				\item Scambio di due righe
+				\item Permutazione di una riga
+				\item Permutazione di una colonna
 			\end{itemize}
 		}
 	\end{block}
@@ -385,10 +419,11 @@
 	\begin{block}{}
 		\parbox{0.95\columnwidth}{
 			Gli algoritmi evolutivi sono particolari algoritmi genetici in cui:
+			\vspace*{-15pt}
 			\begin{itemize}
-				\item Non ci sono crossover.
-				\item Le mutazioni sono molto più sofisticate.
-				\item Sostanzialmente si lavora con un solo individuo.
+				\item \alert{Non} ci sono crossover
+				\item Le mutazioni sono molto più sofisticate
+				\item Sostanzialmente si lavora con \alert{un solo} individuo
 			\end{itemize}
 		}
 	\end{block}
@@ -431,7 +466,7 @@
 \begin{frame}{algoritmo di Xie e Kang}
 %		\begin{block}{}
 			\parbox{0.98\columnwidth}{
-			L'algoritmo di Xie e Kang è un algoritmo evolutivo per la costruzione di quadrati magici normali con:
+			L'algoritmo di Xie e Kang\footnotemark[1] è un algoritmo evolutivo per la costruzione di quadrati magici normali con:
 			\begin{itemize}
 				\item Mutazioni dinamiche e adattive
 				\item Rettificazioni locali
@@ -445,6 +480,8 @@
 Un quadrato semimagico è sempre completabile ad un quadrato magico utilizzando un numero finito di permutazioni di righe e di colonne oppure di rettificazioni locali.
 		}
 		\end{alertblock}
+		
+		\footnotetext[1]{Xie, T. e Kang, L. (2003), \emph{An Evolutionary Algorithm for Magic Squares}, The 2003 Congress on Evolutionary Computation, 2003.} 
 \end{frame}
 
 \begin{frame}{algoritmo di Xie e Kang -- codifica dell'individuo}
@@ -588,12 +625,12 @@ z = \text{randint}(1,\sigma_t) \quad \text{se} \quad z < 1 \quad \text{o} \quad 
 	\begin{block}{Mutazioni lineari}
 		\parbox{0.97\columnwidth}{
 			 Sono permutazioni casuali di una linea di un quadrato semimagico.
+			 \vspace*{-15pt}
 			 \begin{enumerate}
 				\item Seleziono un numero $ q $ intero da 1 a $ N $.
 				\item Per $ q $ volte estraggo una linea.
 				\item La sostituisco con una permutazione casuale dei suoi elementi.
 			\end{enumerate}
-			
 			La linea rimane magica.
 		}
 	\end{block}
@@ -628,6 +665,7 @@ z = \text{randint}(1,\sigma_t) \quad \text{se} \quad z < 1 \quad \text{o} \quad 
 		con $ m.v. $ costante magica.
 		}
 		\end{block}
+		Sono state implementate altre tre condizioni simili, che coinvolgono due o quattro numeri.
 		
 		\column{0.5\textwidth}
 		
@@ -635,6 +673,7 @@ z = \text{randint}(1,\sigma_t) \quad \text{se} \quad z < 1 \quad \text{o} \quad 
 			\centering
 			\subfloat[Prima]{
 				\begin{tikzpicture}[scale = 0.75]
+				\node at (-0.5, 0) {};				
 				\draw (0,0) grid (3,3);
 				\node at (1.5, 1.5) {\large 3};
 				\node at (0.5, 0.5) {\large 2};
@@ -645,12 +684,17 @@ z = \text{randint}(1,\sigma_t) \quad \text{se} \quad z < 1 \quad \text{o} \quad 
 				\node at (1.5, 2.5) {\large 5};
 				\node at (2.5, 0.5) {\large 9};
 				\node at (2.5, 1.5) {\large 8};
+				\draw[->, thick] (3.25, 2.5) -- (3.5, 2.5) node[right] {\large 12};
+				\draw[->, thick] (3.25, 1.5) -- (3.5, 1.5) node[right] {\large 15};
+				\draw[->, thick] (3.25, 0.5) -- (3.5, 0.5) node[right] {\large 18};
 				\end{tikzpicture}		
 			}
 			
 			\subfloat[Dopo]{
 				
 				\begin{tikzpicture}[scale = 0.75]
+				\node at (-0.5, 0) {};				
+				
 				\draw (0,0) grid (3,3);
 				
 				\draw[fill = gray, opacity = 0.2]
@@ -668,6 +712,9 @@ z = \text{randint}(1,\sigma_t) \quad \text{se} \quad z < 1 \quad \text{o} \quad 
 				\node at (1.5, 2.5) {\large 5};
 				\node at (2.5, 0.5) {\large \textbf{6}};
 				\node at (2.5, 1.5) {\large 8};
+				\draw[->, thick] (3.25, 2.5) -- (3.5, 2.5) node[right] {\large 15};
+				\draw[->, thick] (3.25, 1.5) -- (3.5, 1.5) node[right] {\large 15};
+				\draw[->, thick] (3.25, 0.5) -- (3.5, 0.5) node[right] {\large 15};
 				\end{tikzpicture}			
 			}
 			
@@ -675,6 +722,123 @@ z = \text{randint}(1,\sigma_t) \quad \text{se} \quad z < 1 \quad \text{o} \quad 
 		
 	\end{columns}
 \end{frame}
+
+\begin{frame}{algoritmo di Xie e Kang -- rettificazioni locali diagonale}
+	
+	\begin{columns}[onlytextwidth]
+		
+		\column{0.5\textwidth}	
+		Rettificazioni locali diagonali:
+		\begin{itemize}
+			\item Puntuali: se scambiano numeri
+			\item Lineari: se scambiano linee
+		\end{itemize}			
+		\begin{block}{Esempio di rettificazione locale diagonale puntuale}
+			\parbox{0.96\columnwidth}{
+			Se sono soddisfatte le condizioni:
+			\vspace*{-15pt}
+			\begin{itemize}
+				\item $ a_{ii} + a_{ij} = a_{ji} + a_{jj} $
+				\item $ \left(a_{ii} +  a_{jj} \right) - \left(a_{ij} +  a_{ji} \right) = \text{dg1} - \mathit{m}$
+			\end{itemize}
+			allora $ a_{ii} $ è scambiato con $ a_{ji} $ e $ a_{ji} $ con $ a_{jj} $. 
+			}
+		\end{block}
+		
+		\column{0.5\textwidth}
+		
+		\begin{figure}[htbp]
+			\centering
+			\subfloat[Prima]{
+				\begin{tikzpicture}[scale = 0.75]
+				\node at (-0.5, 0) {};				
+				\draw (0,0) grid (3,3);
+				\node at (1.5, 1.5) {\large 3};
+				\node at (0.5, 0.5) {\large 2};
+				\node at (1.5, 0.5) {\large 7};
+				\node at (0.5, 2.5) {\large 1};
+				\node at (0.5, 1.5) {\large 4};
+				\node at (2.5, 2.5) {\large 6};
+				\node at (1.5, 2.5) {\large 5};
+				\node at (2.5, 0.5) {\large 9};
+				\node at (2.5, 1.5) {\large 8};
+				\draw[->, thick] (3.25, 2.5) -- (3.5, 2.5) node[right] {\large 12};
+				\draw[->, thick] (3.25, 1.5) -- (3.5, 1.5) node[right] {\large 15};
+				\draw[->, thick] (3.25, 0.5) -- (3.5, 0.5) node[right] {\large 18};
+				\end{tikzpicture}		
+			}
+			
+			\subfloat[Dopo]{
+				
+				\begin{tikzpicture}[scale = 0.75]
+				\node at (-0.5, 0) {};				
+				
+				\draw (0,0) grid (3,3);
+				
+				\draw[fill = gray, opacity = 0.2]
+				(2,2) rectangle (3,3);	
+				
+				\draw[fill = gray, opacity = 0.2]
+				(2,1) rectangle (3,0);	
+				
+				\node at (1.5, 1.5) {\large 3};
+				\node at (0.5, 0.5) {\large 2};
+				\node at (1.5, 0.5) {\large 7};
+				\node at (0.5, 2.5) {\large 1};
+				\node at (0.5, 1.5) {\large 4};
+				\node at (2.5, 2.5) {\large \textbf{9}};
+				\node at (1.5, 2.5) {\large 5};
+				\node at (2.5, 0.5) {\large \textbf{6}};
+				\node at (2.5, 1.5) {\large 8};
+				\draw[->, thick] (3.25, 2.5) -- (3.5, 2.5) node[right] {\large 15};
+				\draw[->, thick] (3.25, 1.5) -- (3.5, 1.5) node[right] {\large 15};
+				\draw[->, thick] (3.25, 0.5) -- (3.5, 0.5) node[right] {\large 15};
+				\end{tikzpicture}			
+			}
+			
+		\end{figure}
+		
+	\end{columns}
+\end{frame}
+
+\begin{frame}{algoritmo di Xie e Kang -- risultati}
+
+\begin{table}[htbp]
+	\centering
+	\caption*{Risultati con $ N $ ordine del quadrato, $ n_{tent} $ numero di tentativi di esecuzione, $ n_{ok} $ numero di successi e $ \tau $ tempo medio di esecuzione.}
+	\vspace*{-10pt}
+	\alt<2->{\newcolumntype{C}{>{\columncolor{green!25}}c}}{\newcolumntype{C}{c}}
+	\subfloat[Popolazione di 25 figli.]{
+		\begin{tabular}{c|CCc}	\toprule
+			$ N $ & $ n_{tent} $ & $ n_{ok} $ &        $ \tau $        \\ \midrule
+			3   &      10      &     10     & $ \SI{0.12}{\second} $ \\
+			10   &      10      &     10     &  $ \SI{55}{\second} $  \\
+			15   &      10      &     10     & $ \SI{5.75}{\minute} $ \\
+			20   &      10      &     10     & $ \SI{31.2}{\minute} $ \\
+			25   &      10      &     10     &  $ \SI{1.73}{\hour} $  \\
+			30   &      10      &     10     &  $ \SI{4.23}{\hour} $  \\
+			35   &      10      &     10     & $ \SI{12.38}{\hour} $  \\
+			40   &      10      &     10     & $ \SI{25.79}{\hour} $  \\ \bottomrule
+		\end{tabular} 
+	}   \qquad
+	\subfloat[Popolazione di 10 figli.]{	
+		\begin{tabular}{c|CCc}	\toprule
+			$ N $ & $ n_{tent} $ & $ n_{ok} $ &        $ \tau $        \\ \midrule
+			3   &      10      &     10     & $ \SI{0.22}{\second} $ \\
+			10   &      10      &     10     &  $ \SI{69}{\second} $  \\
+			15   &      10      &     10     & $ \SI{4.37}{\minute} $ \\
+			20   &      10      &     10     & $ \SI{26.3}{\minute} $ \\
+			25   &      10      &     10     &  $ \SI{1.51}{\hour} $  \\
+			30   &      10      &     10     &  $ \SI{3.97}{\hour} $  \\
+			35   &      10      &     10     &  $ \SI{8.63}{\hour} $  \\
+			40   &      10      &     10     & $ \SI{15.73}{\hour} $  \\ \bottomrule
+		\end{tabular} 
+	}
+\end{table}
+\centering
+	\only<2->{L'algoritmo non ha \alert{mai} fallito.}
+\end{frame}
+
 
 \begin{frame}[fragile]{algoritmo di Xie e Kang -- tempi di esecuzione}
 
@@ -739,10 +903,105 @@ z = \text{randint}(1,\sigma_t) \quad \text{se} \quad z < 1 \quad \text{o} \quad 
 \end{figure}
 \end{frame}
 
+\begin{frame}[fragile]{algoritmo di Xie e Kang -- distribuzione dei tempi di esecuzione I}
+
+%\only<1>{	
+	\begin{table}[htbp]
+		\centering
+		\caption*{Distribuzione dei tempi di esecuzione}
+		\begin{tabular}{cc}
+			\toprule	
+			Routine          & Tempo speso ($ \si{\percent} $) \\ \midrule
+			\texttt{selectFittest}   &          $ \sim 0.01 $          \\
+			\texttt{mutate}      &          $ \sim 0.7 $           \\
+			\texttt{rectifyDiagonals} &          $ \sim 7.7 $           \\
+			\texttt{rectifyLines}   &           $ \sim 91 $           \\
+			\verb|/   \| &   \verb|/ \| \\
+			\begin{tabular}{c|c}
+				\texttt{onePair}  &   \texttt{twoPairs} 
+			\end{tabular} 	   		  & \begin{tabular}{c|c}
+			$ \sim 13 $   &   $ \sim 87 $ 
+		\end{tabular} 		\\
+		\bottomrule
+	\end{tabular} 
+\end{table}
+%}
+%\only<2->{
+%	
+%	\begin{tikzpicture}
+%	% explode all
+%	\pie[ pos ={0,0}, explode =0.1]{10/ A , 20/ B , 30/ C, 40/ D }
+%	\end{tikzpicture}
+%
+%}
+\end{frame}
+
+\begin{frame}[fragile]{algoritmo di Xie e Kang -- distribuzione dei tempi di esecuzione II}
+	
+Perché? (Rettificazioni a due coppie)
+\begin{lstlisting}[language=Mathematica,basicstyle=\ttfamily,keywordstyle=\color{blue}]
+<@\textcolor{gray}{(*i1,j1 indici del primo elemento*)}@>
+For[i1 = 1, i1 <= N, i1++,  
+    For[j1 = 1, j1 <= N, j1++, 
+        <@\textcolor{gray}{(*Scorro il resto del quadrato dopo i1,j1*)}@>
+        For[i2 = i1 + 1, i2 <= N, i2++, 
+            For[j2 = 1, j2 <= N, j2++, 
+               [...]  <@\textcolor{gray}{(*Vari controlli*)}@>
+\end{lstlisting}
+Il numero di operazioni cresce come $ N^4 $. \\
+%Le rettificazioni a una coppia hanno un ciclo in meno perché si controllano solo gli elementi sulla stessa linea. \\
+E' necessaria questa implementazione perché bisogna operare direttamente con gli indici.
+\end{frame}
+
+
 \section{conclusioni e sviluppi futuri}
 
-\begin{frame}{conclusioni e sviluppi futuri}
+\begin{frame}{conclusioni e sviluppi futuri -- conclusioni}
+%	\begin{block}{Conclusioni}
+		\begin{itemize}
+%			\parbox{0.95\columnwidth}{
+			\item \alert{E' possibile} realizare con successo algoritmi stocastici per la costruzione di quadrati magici se non si usano crossover e se si interviene in modo sistematico
+			\item Questi algoritmi sono molto più efficienti della ricerca a tappeto
+			\item Si è mostrato che l'approccio di Xie e Kang \alert{funziona}
+			\item \alert{Non} si è ritrovata la legge di scala trovata da Xie e Kang, probabilmente a causa della quasi totale ignoranza riguardo l'implementazione originale
+%			\item Mathematica \alert{non} si è rivelato necessario ai fini dell'implementazione 
+%			}
+		\end{itemize}
+%	\end{block}
+\end{frame}
 
+\begin{frame}{conclusioni e sviluppi futuri -- generalizzazioni e sviluppi futuri}
+	%	\begin{block}{Conclusioni}
+	Alcune questioni lasciate aperte:
+	\begin{itemize}
+		%			\parbox{0.95\columnwidth}{
+		\item Ottimizzare implementazione, \texttt{Compile[]}?
+		\item Parallelizzare i metodi di rettificazione
+		\item Indagare dipendenza del tempo di esecuzione dalla dimensione della popolazione
+		%			}
+	\end{itemize}
+	Possibili estensioni:
+	E' possibile generalizzare l'algoritmo fintato che si generalizzano i metodi di rettificazione, quindi per tutti quei casi in cui $ m.v. $ è fissato.
+	Ad esempio:
+	\begin{itemize}
+		\item Quadrati magici vincolati
+		\item Quadrati magici non normali con costante magica fissata
+	\end{itemize}
+	%	\end{block}
+\end{frame}
+
+\begin{frame}{conclusioni e sviluppi futuri -- il ruolo di Mathematica}
+	%	\begin{block}{Conclusioni}
+	Mathematica \alert{non si è rivelato necessario} nell'implementazione di questi algoritmi perché la quasi totalità della manipolazione è numerica e non simbolica. \\
+	Tuttavia Mathematica ha reso l'implementazione più diretta perché:
+	\begin{itemize}
+		%			\parbox{0.95\columnwidth}{
+		\item Le funzioni vettorializzate, come \texttt{Map[]}, \texttt{Apply[]}, permettono l'implementazione molto elegante dei metodi che agiscono sulle popolazioni intere
+		\item \texttt{Replace[]} permette di fare gli scambi in modo conciso è chiaro. 
+		%			}
+	\end{itemize}
+	
+	%	\end{block}
 \end{frame}
 
 \begin{frame}[standout]
