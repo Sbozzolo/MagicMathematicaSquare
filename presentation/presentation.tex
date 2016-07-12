@@ -70,7 +70,7 @@
 
 \title{Studio di algoritmi stocastici per la costruzione di quadrati magici}
 \subtitle{Metodi Computazionali della Fisica}
-\date{\today}
+\date{13 Luglio 2016}
 \author{Gabriele Bozzola \\ Matricola 882709}
 \institute{Università degli studi di Milano}
 % \titlegraphic{\hfill\includegraphics[height=1.5cm]{log	o.pdf}}
@@ -79,7 +79,7 @@
 
 	\maketitle
 
-\section{il problema}
+%\section{il problema}
 
 \begin{frame}[fragile]{quadrati magici}
   \begin{columns}[T,onlytextwidth]
@@ -129,7 +129,7 @@
 	\end{alertblock}
 
 	\begin{alertblock}{Formula per la costante magica}
-		$ \forall N \in \mathbb{N} - \{2\} $ la costante magica $ \mathit{m} $ di un quadrato di ordine $ N $ è:
+		$ \forall N \in \mathbb{N} - \{2\} $ la costante magica $ m.v. $ di un quadrato di ordine $ N $ è:
 		\begin{equation*}\label{equa:costante_magica}
 		 \mathit{m.v.} = \frac{1}{2} N (N^2 + 1)
 		\end{equation*}
@@ -182,7 +182,7 @@
 %	    	\transduration<0-95>{0}
 %	    	\multiinclude[<+->][format=png, graphics={width=\textwidth}]{siamesegif/SiameseMethod}
 
-%	\animategraphics[loop,controls,width=\columnwidth]{8}{siamesegif/SiameseMethod-}{0}{95}
+	\animategraphics[loop,controls,width=\columnwidth]{8}{siamesegif/SiameseMethod-}{0}{95}
 
 	\end{columns}
 
@@ -197,7 +197,7 @@
   I metodi stocastici risolvono questi problemi.
 \end{frame}
 
-\section{algoritmi genetici}
+%\section{algoritmi genetici}
 
 \begin{frame}{algoritmo genetico - funzionamento}
 
@@ -409,7 +409,7 @@
 	%		}
 \end{frame}
 
-\section{algoritmo evolutivo}
+%\section{algoritmo evolutivo}
 
 \begin{frame}{algoritmo evolutivo - funzionamento}
 
@@ -494,11 +494,12 @@ Un quadrato semimagico è sempre completabile ad un quadrato magico utilizzando 
      	\parbox{0.98\columnwidth}{
 			\[ f(M) = 
 			\begin{cases}
-			\sum_{i = 1}^{N}\left(\text{row}(i) + \text{col}(i) \right) & \text{solo diagonali non magiche} \\
+			\sum_{i = 1}^{N}\left(\text{row}(i) + \text{col}(i) \right) & \text{semimagico} \\
 			- \left(\text{dg1} + \text{dg2} \right) & \text{altrimenti} 
 			\end{cases}
 			\]
 		Dove col$ (i) $ e row$ (j) $ sono rispettivamente la somma degli elementi sulla $ i- $esima colonna e $ j- $esima riga di $ M $, e dg1 e dg2 sono la somma degli elementi sulla diagonale e sull'antidiagonale di $ M $.
+%		La fitness è negativa per quadrati semimagici, ciò permette di trovare anche in una popolazione mista il quadrato più vicino ad essere magico.
      	}
      \end{block}	
 \end{frame}
@@ -512,8 +513,8 @@ Un quadrato semimagico è sempre completabile ad un quadrato magico utilizzando 
     \begin{block}{Mutazioni}
       \parbox{0.98\columnwidth}{
         \begin{itemize}
-        \item Dinamiche: la probabilità di mutazione non è fissa, ma dipende dal numero di linee non magiche.
-        \item Adattive: le mutazioni dipendono da quanto il quadrato non è magico.
+        \item Dinamiche: la probabilità di mutazione non è fissa, ma dipende dal numero di linee non magiche
+        \item Adattive: le mutazioni dipendono da quanto il quadrato non è magico
         \end{itemize}
       }
     \end{block}
@@ -521,8 +522,8 @@ Un quadrato semimagico è sempre completabile ad un quadrato magico utilizzando 
     \begin{block}{Mutazioni}
     	\parbox{0.98\columnwidth}{
     		\begin{itemize}
-    			\item \alert{Mutazioni puntuali} per quadrati generici.
-    			\item \alert{Mutazioni lineari} per quadrati che hanno solo le diagonali non magiche (\alert{quadrati semimagici}).
+    			\item \alert{Mutazioni puntuali} per quadrati generici
+    			\item \alert{Mutazioni lineari} per quadrati che hanno solo le diagonali non magiche (\alert{quadrati semimagici})
     		\end{itemize}
     	}
     \end{block}   
@@ -541,8 +542,8 @@ Un quadrato semimagico è sempre completabile ad un quadrato magico utilizzando 
     \begin{block}{Insiemi di mutazione}
     	\parbox{0.98\columnwidth}{
     		\begin{itemize}
-    			\item $ S_1 $ numeri la cui riga e colonna non è magica.
-    			\item $ S_2 $ numeri in righe o colonne non magiche.
+    			\item $ S_1 $ numeri la cui riga e colonna non è magica
+    			\item $ S_2 $ numeri in righe o colonne non magiche
     		\end{itemize}
     	}
     \end{block} 
@@ -727,7 +728,7 @@ z = \text{randint}(1,\sigma_t) \quad \text{se} \quad z < 1 \quad \text{o} \quad 
 	
 	\begin{columns}[onlytextwidth]
 		
-		\column{0.5\textwidth}	
+		\column{0.55\textwidth}	
 		Rettificazioni locali diagonali:
 		\begin{itemize}
 			\item Puntuali: se scambiano numeri
@@ -736,10 +737,9 @@ z = \text{randint}(1,\sigma_t) \quad \text{se} \quad z < 1 \quad \text{o} \quad 
 		\begin{block}{Esempio di rettificazione locale diagonale puntuale}
 			\parbox{0.96\columnwidth}{
 			Se sono soddisfatte le condizioni:
-			\vspace*{-15pt}
 			\begin{itemize}
 				\item $ a_{ii} + a_{ij} = a_{ji} + a_{jj} $
-				\item $ \left(a_{ii} +  a_{jj} \right) - \left(a_{ij} +  a_{ji} \right) = \text{dg1} - \mathit{m}$
+				\item $ \left(a_{ii} +  a_{jj} \right) - \left(a_{ij} +  a_{ji} \right) = \text{dg1} - \mathit{m.v.}$
 			\end{itemize}
 			allora $ a_{ii} $ è scambiato con $ a_{ji} $ e $ a_{ji} $ con $ a_{jj} $. 
 			}
@@ -751,54 +751,116 @@ z = \text{randint}(1,\sigma_t) \quad \text{se} \quad z < 1 \quad \text{o} \quad 
 			\centering
 			\subfloat[Prima]{
 				\begin{tikzpicture}[scale = 0.75]
-				\node at (-0.5, 0) {};				
+				\node at (-1, 0) {};				
 				\draw (0,0) grid (3,3);
-				\node at (1.5, 1.5) {\large 3};
-				\node at (0.5, 0.5) {\large 2};
-				\node at (1.5, 0.5) {\large 7};
-				\node at (0.5, 2.5) {\large 1};
-				\node at (0.5, 1.5) {\large 4};
-				\node at (2.5, 2.5) {\large 6};
-				\node at (1.5, 2.5) {\large 5};
-				\node at (2.5, 0.5) {\large 9};
-				\node at (2.5, 1.5) {\large 8};
-				\draw[->, thick] (3.25, 2.5) -- (3.5, 2.5) node[right] {\large 12};
-				\draw[->, thick] (3.25, 1.5) -- (3.5, 1.5) node[right] {\large 15};
-				\draw[->, thick] (3.25, 0.5) -- (3.5, 0.5) node[right] {\large 18};
+				\node at (1.5, 1.5) {\large 2};
+				\node at (0.5, 0.5) {\large 8};
+				\node at (1.5, 0.5) {\large 5};
+				\node at (0.5, 2.5) {\large 4};
+				\node at (0.5, 1.5) {\large 7};
+				\node at (2.5, 2.5) {\large 9};
+				\node at (1.5, 2.5) {\large 1};
+				\node at (2.5, 0.5) {\large 3};
+				\node at (2.5, 1.5) {\large 6};
+				
+				\draw[->, thick] (3.25, -0.25) --(3.5, -0.5);
+				\node at (3.75, -0.75) {\large 9};   
 				\end{tikzpicture}		
 			}
 			
 			\subfloat[Dopo]{
 				
 				\begin{tikzpicture}[scale = 0.75]
-				\node at (-0.5, 0) {};				
+				\node at (-1, 0) {};				
 				
 				\draw (0,0) grid (3,3);
 				
 				\draw[fill = gray, opacity = 0.2]
-				(2,2) rectangle (3,3);	
+				(1,0) rectangle (3,2);	
 				
-				\draw[fill = gray, opacity = 0.2]
-				(2,1) rectangle (3,0);	
-				
-				\node at (1.5, 1.5) {\large 3};
-				\node at (0.5, 0.5) {\large 2};
-				\node at (1.5, 0.5) {\large 7};
-				\node at (0.5, 2.5) {\large 1};
-				\node at (0.5, 1.5) {\large 4};
-				\node at (2.5, 2.5) {\large \textbf{9}};
-				\node at (1.5, 2.5) {\large 5};
+				\node at (1.5, 1.5) {\large \textbf{5}};
+				\node at (0.5, 0.5) {\large 8};
+				\node at (1.5, 0.5) {\large \textbf{2}};
+				\node at (0.5, 2.5) {\large 4};
+				\node at (0.5, 1.5) {\large 7};
+				\node at (2.5, 2.5) {\large 9};
+				\node at (1.5, 2.5) {\large 1};
 				\node at (2.5, 0.5) {\large \textbf{6}};
-				\node at (2.5, 1.5) {\large 8};
-				\draw[->, thick] (3.25, 2.5) -- (3.5, 2.5) node[right] {\large 15};
-				\draw[->, thick] (3.25, 1.5) -- (3.5, 1.5) node[right] {\large 15};
-				\draw[->, thick] (3.25, 0.5) -- (3.5, 0.5) node[right] {\large 15};
+				\node at (2.5, 1.5) {\large \textbf{3}};
+				
+				\draw[->, thick] (3.25, -0.25) --(3.5, -0.5);
+				\node at (3.75, -0.75) {\large 15};   
 				\end{tikzpicture}			
 			}
 			
 		\end{figure}
 		
 	\end{columns}
+\end{frame}
+
+\begin{frame}{algoritmo di Xie e Kang -- metodi di selezione}
+	\begin{block}{Metodi di selezione}
+		\parbox{0.97\columnwidth}{
+			Il nuovo genitore è 
+			\begin{itemize}
+				\item$ (\mu, \lambda)-ES $: il migliore figlio della precedente. Permette maggiore variabilità.
+				\item $ (\mu + \lambda)-ES $: il migliore tra il genitore e i figli della precedente. Permette di conservare i risultati ottenuti.
+			\end{itemize}
+			I metodi applicati dipendono dalle caratteristiche del quadrato migliore.
+		}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{algoritmo di Xie e Kang -- alcuni punti delicati o interessanti I}
+	Funzione di fitness:
+	
+\begin{lstlisting}[language=Mathematica,basicstyle=\ttfamily,keywordstyle=\color{blue}]	
+<@\textcolor{gray}{(*La fitness e' negativa quando il quadrato e' }@>
+<@\textcolor{gray}{semimagico, questo mi permette di renderli preferiti}@>
+<@\textcolor{gray}{ai quadrati generici*)}@>
+If[incorrectLines[ind] === 0,
+   Return[-Total[diagonalsDeviation[ind]]],
+   Return[Total[linesDeviation[ind]]];
+];
+\end{lstlisting}
+\vspace*{10pt}
+Estensione dei metodi su tutta la popolazione:
+\vspace*{-10pt}
+\begin{lstlisting}[language=Mathematica,basicstyle=\ttfamily,keywordstyle=\color{blue}]	
+fitnessPop[pop_List] := Return[fitness /@ pop];
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{algoritmo di Xie e Kang -- alcuni punti delicati o interessanti II}
+	\texttt{fittestChild}: selezionare l'individuo migliore in \texttt{pop}.
+
+\begin{lstlisting}[language=Mathematica,basicstyle=\ttfamily,keywordstyle=\color{blue}]	
+fp = fitnessPop[pop];
+<@\textcolor{gray}{(*Controllo se c'e' l'individuo perfetto*)}@>
+If[Length[Position[fp, 0]] =!= 0,
+   Return[pop[[Position[fp, 0][[1,1]]]]];
+];
+<@\textcolor{gray}{(*Io voglio l'individuo piu' vicino a zero,}@>
+<@\textcolor{gray}{ma voglio anche privilegiare chi ha fitness negativa*)}@>
+If[Min[fp] < 0,
+   fp = (#)^(-1) & /@ fp
+];
+<@\textcolor{gray}{(*Posizione del migliore*)}@>
+Random[Integer, {1, Length[Position[fp, Min[fp]]]}]
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{algoritmo di Xie e Kang -- alcuni punti delicati o interessanti III}
+Algoritmo completo:
+	
+\begin{lstlisting}[language=Mathematica,basicstyle=\ttfamily,keywordstyle=\color{blue}]	
+[...] <@\textcolor{gray}{(*Vari controlli*)}@>
+offspring = <@\textcolor{blue}{ParallelMap}@>[mutate, offspring];
+[...] <@\textcolor{gray}{(*Altri controlli*)}@>
+[...] <@\textcolor{gray}{(*Salvo risultati intermedi*)}@>
+\end{lstlisting}
+L'algoritmo completo esegue operazioni che coinvolgono la popolazione intera parallelizzate su una macchina (lara) dotata di quattro core. 
+
 \end{frame}
 
 \begin{frame}{algoritmo di Xie e Kang -- risultati}
@@ -839,6 +901,15 @@ z = \text{randint}(1,\sigma_t) \quad \text{se} \quad z < 1 \quad \text{o} \quad 
 	\only<2->{L'algoritmo non ha \alert{mai} fallito.}
 \end{frame}
 
+\begin{frame}{algoritmo di Xie e Kang -- fitness}
+	\centering
+	\includegraphics*[width=0.9\columnwidth]{fitvsgen}
+\end{frame}
+
+\begin{frame}{algoritmo di Xie e Kang -- linee non magiche}
+	\centering
+	\includegraphics*[width=0.9\columnwidth]{incvsgen}
+\end{frame}
 
 \begin{frame}[fragile]{algoritmo di Xie e Kang -- tempi di esecuzione}
 
@@ -953,8 +1024,7 @@ Il numero di operazioni cresce come $ N^4 $. \\
 E' necessaria questa implementazione perché bisogna operare direttamente con gli indici.
 \end{frame}
 
-
-\section{conclusioni e sviluppi futuri}
+%\section{conclusioni e sviluppi futuri}
 
 \begin{frame}{conclusioni e sviluppi futuri -- conclusioni}
 %	\begin{block}{Conclusioni}
@@ -976,6 +1046,7 @@ E' necessaria questa implementazione perché bisogna operare direttamente con gl
 	\begin{itemize}
 		%			\parbox{0.95\columnwidth}{
 		\item Ottimizzare implementazione, \texttt{Compile[]}?
+		\item Confrontare con realizzazione in linguaggio compilato
 		\item Parallelizzare i metodi di rettificazione
 		\item Indagare dipendenza del tempo di esecuzione dalla dimensione della popolazione
 		%			}
@@ -996,10 +1067,11 @@ E' necessaria questa implementazione perché bisogna operare direttamente con gl
 	Tuttavia Mathematica ha reso l'implementazione più diretta perché:
 	\begin{itemize}
 		%			\parbox{0.95\columnwidth}{
-		\item Le funzioni vettorializzate, come \texttt{Map[]}, \texttt{Apply[]}, permettono l'implementazione molto elegante dei metodi che agiscono sulle popolazioni intere
-		\item \texttt{Replace[]} permette di fare gli scambi in modo conciso è chiaro. 
+		\item Le funzioni vettorializzate, come \texttt{Map[]}, \texttt{Apply[]}, \texttt{Table[]} permettono l'implementazione molto elegante dei metodi che agiscono sulle popolazioni intere
+		\item \texttt{Replace[]} permette di fare gli scambi in modo conciso è chiaro
 		%			}
 	\end{itemize}
+	Il costo di questa semplificazione è probabilmente la riduzione nell'efficienza.
 	
 	%	\end{block}
 \end{frame}
